@@ -1,0 +1,74 @@
+.logo--mask {
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.logo--mask img,
+.logo--mask p {
+  width: 20rem;
+  height: auto;
+  margin: 0 auto;
+  visibility: hidden;
+  opacity: 0;
+}
+.logo--mask p {
+  font-size: 3.5rem;
+  font-weight: bold;
+  text-align: center;
+  margin: 0;
+  width: 100%;
+}
+.mask {
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1000;
+  visibility: hidden;
+  opacity: 0;
+}
+.mask__slice {
+  flex: 1;
+  background-color: #000;
+}
+.mask__inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translateX(-50%) translateY(-50%);
+  transform: translateX(-50%) translateY(-50%);
+}
+.mask-line {
+  position: relative;
+  -webkit-transform-origin: left;
+  transform-origin: left;
+  width: 30rem;
+  height: 3px;
+  overflow: hidden;
+  background-color: rgba(255, 255, 255, 0.25);
+  visibility: hidden;
+  opacity: 0;
+}
+.mask-line__inner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  -webkit-transform-origin: left;
+  transform-origin: left;
+}
+
+@media (max-width: 800px) {
+  .resize {
+    display: block;
+  }
+}
+@media (max-height: 600px) {
+  .resize {
+    display: block;
+  }
+}

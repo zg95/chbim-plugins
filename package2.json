@@ -1,0 +1,15 @@
+{
+  "name": "chbim-plugins",
+  "private": false,
+  "version": "0.0.21",
+  "description": "一个简单的组件库",
+  "main": "chbim-plugins.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["vue", "Cesium"],
+  "author": "zhang",
+  "license": "ISC"
+}
