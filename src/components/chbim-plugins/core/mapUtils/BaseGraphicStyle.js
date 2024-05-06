@@ -35,7 +35,7 @@ const updateKmlStyle = (key, value, style) => {
       updateFontSize(value);
       break;
     case "textColor":
-      updateFontColor(value);
+      updatefont_color(value);
       break;
     case "outLine":
       updateFontOutLine(value);
@@ -77,27 +77,134 @@ const updateShpStyle = (key, value, style) => {
       break;
   }
 };
-// difference;type;
-const updateStyle = (vector, label) => {
+
+const updateStyle = (vector, label, customType) => {
   newStyle = {};
-  console.log("ZHANG", vector, label);
-  // 修改矢量
-  if (vector.difference && vector.difference.length > 0)
-    vector.difference.forEach((key) => {
-      assignDeep(newStyle, {
-        [key]: vector.vectorStyle[key],
-      });
-    });
-  // 修改注记
-  if (label.difference && label.difference.length > 0) {
-    label.difference.forEach((key) => {
-      assignDeep(newStyle, {
-        label: {
-          [key]: label.labelStyle[key],
-        },
-      });
-    });
+  let { vectorStyle, difference } = vector;
+  if (vectorStyle) {
+    let { divType } = vectorStyle;
+    let html = ``;
+    if (divType) {
+      // div是一种特殊的点属性 需要单独编辑整体变化
+      let {
+        theme_color,
+        title,
+        font_color,
+        content,
+        scaleByDistance,
+        scaleByDistance_far,
+        scaleByDistance_farValue,
+        scaleByDistance_near,
+        scaleByDistance_nearValue,
+        distanceDisplayCondition,
+        distanceDisplayCondition_far,
+        distanceDisplayCondition_near,
+        clampToGround,
+        divStyle,
+        // theme_color2,
+        // theme_color3,
+      } = vectorStyle;
+      let { theme_color2, theme_color3 } = divStyle;
+      switch (divType) {
+        case "1":
+          // 动态框div
+          html = `<div class="entity-div-style entity-div-style1" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
+            <div class="title">${title}</div>
+          </div >`;
+          break;
+        case "2":
+          // 竖直文本框div
+          html = `<div class="entity-div-style entity-div-style2" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
+            <div class="title">${title}</div>
+             <div class="mars3d-divUpLabel-line"></div>
+          </div >`;
+          break;
+        case "3":
+          // 波浪卡片div
+          html = `<div class="entity-div-style entity-div-style3" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};--theme-color2:${theme_color2};--theme-color3:${theme_color3}">
+            <div class="image"></div><div class="wave"></div><div class="wave"></div><div class="wave"></div>
+            <div class="infotop"><div class="title">${title}</div><div class="content overflow-auto scrollbar h-full">${content}</div></div>
+          </div >`;
+          break;
+        case "4":
+          // 指向说明一
+          html = `<div class="entity-div-style entity-div-style4" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
+            <div class="title">${title}</div>
+          </div >`;
+          break;
+        case "5":
+          // 指向说明二
+          html = `<div class="entity-div-style entity-div-style5 marsTiltPanel marsTiltPanel-theme-green" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};--theme-color2:${theme_color2};">
+            <div class="marsTiltPanel-wrap">
+              <div class="area">
+                <div class="arrow-lt"></div>
+                <div class="b-t"></div>
+                <div class="b-r"></div>
+                <div class="b-b"></div>
+                <div class="b-l"></div>
+                <div class="arrow-rb"></div>
+                <div class="label-wrap">
+                  <div class="title">${title}</div>
+                  <div class="content">${content}</div>
+                </div>
+              </div>
+              <div class="b-t-l"></div>
+              <div class="b-b-r"></div>
+            </div>
+            <div class="arrow"></div>
+          </div >`;
+          // <div class="title">${title}</div>
+          // <div class="content">${content}</div>
+          break;
+        case "6":
+          // 静态文本框
+          html = `<div class="entity-div-style entity-div-style6" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};--theme-color2:${theme_color2};">
+            <div class="title">${title}</div>
+          </div >`;
+          break;
+        case "7":
+          // 桩号
+          html = `<div class="entity-div-style entity-div-style7" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
+            <div class="title">${title}</div>
+            <div class="pile-number">
+              <div class="circular"></div>
+              <div class="pole"></div>
+            </div>
+          </div >`;
+          break;
+      }
+      newStyle = {
+        html,
+        scaleByDistance,
+        scaleByDistance_far,
+        scaleByDistance_farValue,
+        scaleByDistance_near,
+        scaleByDistance_nearValue,
+        distanceDisplayCondition,
+        distanceDisplayCondition_far,
+        distanceDisplayCondition_near,
+        clampToGround,
+      };
+    } else {
+      // 修改普通矢量
+      if (vector.difference && vector.difference.length > 0)
+        vector.difference.forEach((key) => {
+          assignDeep(newStyle, {
+            [key]: vectorStyle[key],
+          });
+        });
+      // 修改注记
+      if (label && label.difference && label.difference.length > 0)
+        label.difference.forEach((key) => {
+          assignDeep(newStyle, {
+            label: {
+              [key]: label.labelStyle[key],
+            },
+          });
+        });
+    }
   }
+
   return newStyle;
 };
 
@@ -176,7 +283,7 @@ const updateFontSize = (value) => {
 };
 
 //  字体颜色
-const updateFontColor = (value) => {
+const updatefont_color = (value) => {
   newStyle = assignDeep(newStyle, {
     label: {
       color: value,

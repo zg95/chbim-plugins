@@ -22,6 +22,10 @@ import BimTerrainProvider from "./core/map/terrainProvider.js";
 import BimElevationImage from "./core/map/elevationImage.js";
 // 动态释放js
 import ViewShed from "./core/mapUtils/ViewShed.js";
+// 注记js
+import BimEntity from "./core/map/entity.js";
+//全景图
+import PanoramicView from "./core/mapUtils/PanoramicView.ts";
 
 import { createApp } from "vue";
 export { Button, BimBackgroundPlate, BimCutscenes, MapModali };
@@ -68,4 +72,6 @@ export {
   BimModel,
   BimVector,
   ViewShed,
+  BimEntity,
+  PanoramicView,
 };
