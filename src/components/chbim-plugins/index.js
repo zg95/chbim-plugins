@@ -26,6 +26,8 @@ import ViewShed from "./core/mapUtils/ViewShed.js";
 import BimEntity from "./core/map/entity.js";
 //全景图
 import PanoramicView from "./core/mapUtils/PanoramicView.ts";
+//矢量注记避让
+import DynamicMasking from "./core/mapUtils/DynamicMasking.ts";
 
 import { createApp } from "vue";
 export { Button, BimBackgroundPlate, BimCutscenes, MapModali };
@@ -74,4 +76,5 @@ export {
   ViewShed,
   BimEntity,
   PanoramicView,
+  DynamicMasking,
 };

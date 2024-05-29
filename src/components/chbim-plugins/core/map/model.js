@@ -345,6 +345,15 @@ class BimModel {
   }
 
   /**
+   * 查询矢量数据的实体
+   * @param  { String } id 矢量id
+   * @returns { Object || Boolean } 返回标绘实体
+   */
+  queryModel(id) {
+    return this.map.getLayer(id, "modelId");
+  }
+
+  /**
    * 用户操作的模型
    * @param  { String } id 模型属性
    */
