@@ -8,7 +8,7 @@ import { updateStyle } from "../mapUtils/BaseGraphicStyle.js";
 import _ from "lodash";
 
 class BimVector {
-  constructor(map, vectorArr = []) {
+  constructor(map, vectorArr = [], isDynamicMasking = false) {
     if (mars3d) {
       this.map = map;
       this.vectorArr = vectorArr;
@@ -39,6 +39,7 @@ class BimVector {
       this.editDate = {
         id: "",
       };
+      this.isDynamicMasking = isDynamicMasking;
     } else {
       console.error("未引入指定插件");
     }
@@ -119,7 +120,6 @@ class BimVector {
             diffHeight,
             outline,
             outlineStyle,
-
             color,
             pixelSize,
             outlineColor,
@@ -131,24 +131,34 @@ class BimVector {
           /**
            * 为动态避让添加透明度;
            **/
+          if (this.isDynamicMasking) {
+            label.color = Cesium.Color.fromCssColorString(
+              label.color
+            ).withAlpha(0);
 
-          label.color = Cesium.Color.fromCssColorString(label.color).withAlpha(
-            0
-          );
+            label.outlineColor = Cesium.Color.fromCssColorString(
+              label.outlineColor
+            ).withAlpha(0.001);
 
-          label.outlineColor = Cesium.Color.fromCssColorString(
-            label.outlineColor
-          ).withAlpha(0.001);
+            label.backgroundColor = Cesium.Color.fromCssColorString(
+              label.backgroundColor
+            ).withAlpha(0.001);
 
-          label.backgroundColor = Cesium.Color.fromCssColorString(
-            label.backgroundColor
-          ).withAlpha(0.001);
+            label.background = false;
+            label.outline = false;
+            label.show = false;
+          } else {
+            label.color = Cesium.Color.fromCssColorString(label.color);
+            label.outlineColor = Cesium.Color.fromCssColorString(
+              label.outlineColor
+            );
+            label.backgroundColor = Cesium.Color.fromCssColorString(
+              label.backgroundColor
+            );
+          }
 
-          label.background = false;
-          label.outline = false;
-          label.show = false;
           /**
-           * 为动态避让添加透明度;
+           * 为动态避让添加透明度 end
            **/
           switch (geometryType) {
             case "LineString":
@@ -178,7 +188,6 @@ class BimVector {
               break;
             case "Polygon":
             case "MultiPolygon":
-              console.log("attributes", materialType, materialOptions);
               if (materialType == "PolyGrass") {
                 materialOptions = {
                   evenColor: new Cesium.Color(0.25, 0.4, 0.1, 1.0),
@@ -212,7 +221,6 @@ class BimVector {
 
             case "Point":
             case "MultiPoint":
-              console.log(JSON.parse(attributes));
               shpLayer = new mars3d.layer.GeoJsonLayer({
                 data,
                 vectorId: id,
@@ -426,7 +434,7 @@ class BimVector {
    * @returns { any }
    */
   nationalBoundaries() {
-    let url = "./gis/nationalBoundaries.json";
+    let url = "/gis/nationalBoundaries.json";
     let graphicLayer = new mars3d.layer.GeoJsonLayer({
       name: "国界",
       url: url,
@@ -459,6 +467,14 @@ class BimVector {
       },
     });
     map.addLayer(graphicLayer);
+  }
+
+  /**
+   * 切换动态避让
+   * @returns { any }
+   */
+  switchDynamicMasking(type) {
+    this.isDynamicMasking = type;
   }
 }
 export default BimVector;

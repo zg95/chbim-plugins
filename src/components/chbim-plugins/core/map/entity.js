@@ -265,9 +265,9 @@ class BimEntity {
    * 停止绘制标绘
    *
    */
-  stopDraw() {
+  stopDraw(isentityItem = true) {
     if (this.entityLayer) this.entityLayer.stopDraw();
-    if (this.entityItem) {
+    if (isentityItem && this.entityItem) {
       this.entityItem.stopEditing();
       this.entityItem.remove();
       this.entityItem = null;

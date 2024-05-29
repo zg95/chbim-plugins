@@ -121,20 +121,21 @@ class BimModel {
           .fetchJson()
           .then((jsonData) => {
             let style = null;
-            let highlight = null;
+            // let highlight = null;
             let clip = { enabled: true, precise: false };
             let area = [];
             if (color) {
               style = {
-                color: { conditions: [["true", "rgba(255, 255, 0, 1)"]] },
-              };
-            } else {
-              highlight = {
-                all: true, //全部整体高亮，false时是构件高亮
-                // type: mars3d.EventType.click, // 默认为鼠标移入高亮，也可以指定click单击高亮
-                color: "rgba(255,0,0,1)",
+                color: { conditions: [["true", color]] },
               };
             }
+            // else {
+            //   highlight = {
+            //     all: true, //全部整体高亮，false时是构件高亮
+            //     // type: mars3d.EventType.click, // 默认为鼠标移入高亮，也可以指定click单击高亮
+            //     color: "rgba(255,0,0,1)",
+            //   };
+            // }
 
             if (window.bimClip && window.bimClip.activeObj[modelId]) {
               Object.keys(window.bimClip.activeObj[modelId]).forEach((key) => {
@@ -226,7 +227,7 @@ class BimModel {
                 resolve();
               });
             this.tilesetLayer.on("click", (e) => {
-              if (e.layer.style == null)
+              if (e.layer.style == null && map.bimMapEdit == "0")
                 e.layer.openHighlight(
                   {
                     color: "rgba(255,0,0,1)",
@@ -289,7 +290,7 @@ class BimModel {
         /**
          * 如果模型自带颜色就不用高亮
          */
-        if (itemModel.style == null)
+        if (itemModel.style == null && map.bimMapEdit == "0")
           itemModel.openHighlight(
             {
               color: "rgba(255,0,0,1)",
@@ -305,7 +306,7 @@ class BimModel {
         this.add(id).then((item) => {
           if (item) {
             if (flyTo) item.flyTo();
-            if (item.style == null) {
+            if (item.style == null && map.bimMapEdit == "0") {
               item.openHighlight(
                 {
                   color: "rgba(255,0,0,1)",

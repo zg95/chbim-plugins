@@ -62,7 +62,7 @@ class BimElevationImage {
     } = this.exposureEnvironmentSettings();
 
     return new Promise((resolve, reject) => {
-      let imageXyzId, url, zIndex;
+      let imageXyzId, url, zIndex, minimumLevel, maximumLevel;
       if (typeof xyzParameter != "object") {
         let xyz = this.query(xyzParameter);
         if (!xyz) reject("缺少树结构");
@@ -70,10 +70,14 @@ class BimElevationImage {
         imageXyzId = gisInfo.id;
         zIndex = gisInfo.order;
         url = xyz.url;
+        minimumLevel = gisInfo.minLevel;
+        maximumLevel = gisInfo.maxLevel;
       } else {
         imageXyzId = xyzParameter.imageXyzId;
         url = xyzParameter.url;
         zIndex = xyzParameter.zIndex;
+        minimumLevel = xyzParameter.minimumLevel;
+        maximumLevel = xyzParameter.maximumLevel;
       }
       this.elevationImageLayer = new mars3d.layer.XyzLayer({
         imageXyzId,
@@ -89,6 +93,8 @@ class BimElevationImage {
         gamma: layerGamma,
         alpha: surfaceOpacity,
         show: true,
+        minimumLevel: minimumLevel || 0,
+        maximumLevel: maximumLevel || 15,
       });
       this.elevationImageLayer.on(mars3d.EventType.load, (event) => {
         resolve(event);
