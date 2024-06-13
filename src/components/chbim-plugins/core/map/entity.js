@@ -93,7 +93,7 @@ class BimEntity {
           item = this.query(modelParameter);
           graphic = JSON.parse(item.bimPlanPainting.graphic);
           graphic.attr = graphic.attr || {};
-          graphic.attr.entityId = graphic.attr.entityId || modelParameter;
+          graphic.attr.entityId = modelParameter;
         } else {
           itemEntity = this.entityLayer.getGraphicByAttr(
             modelParameter.id,
@@ -104,7 +104,7 @@ class BimEntity {
           graphic.attr.entityId = graphic.attr.entityId || entityId;
           if (graphic.attr == undefined) {
             graphic.attr = {
-              entityId: modelParameter,
+              entityId: modelParameter.id,
             };
           } else if (graphic.attr?.entityId == undefined && entityId) {
             graphic.attr.entityId = entityId;
@@ -172,7 +172,11 @@ class BimEntity {
   remove(id) {
     if (this.entityLayer.getGraphicByAttr(id, "entityId")) {
       this.entityLayer.getGraphicByAttr(id, "entityId").remove();
-      if (this.entityItem && this.entityItem.options.attr.entityId == id)
+      if (
+        this.entityItem &&
+        (this.entityItem._state == "destroy" ||
+          this.entityItem.options.attr.entityId == id)
+      )
         this.entityItem = null;
     }
   }
@@ -202,26 +206,22 @@ class BimEntity {
    */
   startDrawGraphic(data) {
     let { type, style } = data;
+    console.log(data);
     if (type == "div") {
-      let {
-        title,
-        divType,
-        theme_color,
-        font_color,
-        scaleByDistance,
-        scaleByDistance_far,
-        scaleByDistance_farValue,
-        scaleByDistance_near,
-        scaleByDistance_nearValue,
-        distanceDisplayCondition,
-        distanceDisplayCondition_far,
-        distanceDisplayCondition_near,
-        clampToGround,
-      } = style;
-      let newData = {
-        type: "div",
-        style: {
-          pointerEvents: true,
+      if (style.html) {
+        // 收藏添加
+        this.entityLayer.startDraw(data).then((graphic) => {
+          setTimeout(() => {
+            this.entityItem = graphic;
+            this.entityLayer.startEditing(graphic);
+          }, 500);
+        });
+      } else {
+        let {
+          title,
+          divType,
+          theme_color,
+          font_color,
           scaleByDistance,
           scaleByDistance_far,
           scaleByDistance_farValue,
@@ -231,27 +231,40 @@ class BimEntity {
           distanceDisplayCondition_far,
           distanceDisplayCondition_near,
           clampToGround,
-          horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-          verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-        },
-      };
-
-      switch (divType) {
-        case "1":
-          newData.style.html = `<div class="entity-div-style entity-div-style1" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
+        } = style;
+        let newData = {
+          type: "div",
+          style: {
+            pointerEvents: true,
+            scaleByDistance,
+            scaleByDistance_far,
+            scaleByDistance_farValue,
+            scaleByDistance_near,
+            scaleByDistance_nearValue,
+            distanceDisplayCondition,
+            distanceDisplayCondition_far,
+            distanceDisplayCondition_near,
+            clampToGround,
+            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+          },
+        };
+        switch (divType) {
+          case "1":
+            newData.style.html = `<div class="entity-div-style entity-div-style1" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
             <div class="title">${title}</div>
           </div>`;
-          newData.style.horizontalOrigin = Cesium.HorizontalOrigin.CENTER;
-          break;
+            newData.style.horizontalOrigin = Cesium.HorizontalOrigin.CENTER;
+            break;
+        }
+        this.entityLayer.startDraw(newData).then((graphic) => {
+          setTimeout(() => {
+            this.entityItem = graphic;
+            this.entityLayer.startEditing(graphic);
+          }, 500);
+        });
       }
-      this.entityLayer.startDraw(newData).then((graphic) => {
-        setTimeout(() => {
-          this.entityItem = graphic;
-          this.entityLayer.startEditing(graphic);
-        }, 500);
-      });
     } else {
-      console.log(data);
       this.entityLayer.startDraw(data).then((graphic) => {
         setTimeout(() => {
           this.entityItem = graphic;

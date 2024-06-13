@@ -29,6 +29,9 @@ import PanoramicView from "./core/mapUtils/PanoramicView.ts";
 //矢量注记避让
 import DynamicMasking from "./core/mapUtils/DynamicMasking.ts";
 
+// 签名
+// import GenerateBrowserFingerprint from "./core/mapUtils/translate.js";
+
 import { createApp } from "vue";
 export { Button, BimBackgroundPlate, BimCutscenes, MapModali };
 

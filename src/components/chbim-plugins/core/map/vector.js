@@ -125,6 +125,7 @@ class BimVector {
               pixelSize,
               outlineColor,
               outlineWidth,
+              classificationType,
             } = JSON.parse(attributes);
             let shpLayer;
             console.log("geometryType", geometryType);
@@ -179,6 +180,7 @@ class BimVector {
                       distanceDisplayCondition_near,
                       materialType,
                       materialOptions,
+                      classificationType,
                       label,
                     },
                   },
@@ -213,6 +215,7 @@ class BimVector {
                       distanceDisplayCondition_near,
                       outlineStyle,
                       outline,
+                      classificationType,
                       label,
                     },
                   },

@@ -16,6 +16,21 @@ export default defineConfig({
       entry: path.resolve(__dirname, "./src/components/chbim-plugins/index.js"), //指定组件编译入口文件
       name: "chbim-plugins",
       fileName: "chbim-plugins",
+      minify: "terser", // 使用terser进行混淆
+      terserOptions: {
+        compress: {
+          // 自定义压缩选项
+          drop_console: true, // 移除console语句
+          drop_debugger: true, // 移除debugger语句
+        },
+        mangle: {
+          // 自定义变量名混淆
+          toplevel: true,
+          properties: {
+            regex: /^_/,
+          },
+        },
+      },
     }, //库编译模式配置
     rollupOptions: {
       // 确保外部化处理那些你不想打包进库的依赖

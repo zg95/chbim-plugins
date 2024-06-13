@@ -34,8 +34,9 @@ class BimModel {
    * add 模型方法
    * @param  { Object || String } modelParameter 模型属性 或者 模型id
    * @param  { Object } fn 自定义注册事件
+   * @param  { Object } customAttributes 自定义属性
    */
-  add(modelParameter, fn) {
+  add(modelParameter, fn, customAttributes) {
     /**
      * modelId 模型id
      * modelType 模型类型 --  0 倾斜摄影  --  1 白膜  --  2 普通模型
@@ -87,6 +88,9 @@ class BimModel {
         url = modelParameter.url;
         color = modelParameter.color;
       }
+      // 自定义属性
+      if (customAttributes && customAttributes.color)
+        color = customAttributes.color;
 
       let itemModel = this.map.getLayer(modelParameter, "modelId");
 
@@ -129,13 +133,6 @@ class BimModel {
                 color: { conditions: [["true", color]] },
               };
             }
-            // else {
-            //   highlight = {
-            //     all: true, //全部整体高亮，false时是构件高亮
-            //     // type: mars3d.EventType.click, // 默认为鼠标移入高亮，也可以指定click单击高亮
-            //     color: "rgba(255,0,0,1)",
-            //   };
-            // }
 
             if (window.bimClip && window.bimClip.activeObj[modelId]) {
               Object.keys(window.bimClip.activeObj[modelId]).forEach((key) => {
@@ -166,6 +163,7 @@ class BimModel {
               url: encodeURI(url),
               flat: {
                 precise: false,
+                enabled: true,
               },
               skipLevelOfDetail: true,
               loadSiblings: true,
@@ -280,9 +278,10 @@ class BimModel {
   /**
    * 选中模型
    * @param  { String } id 模型id
+   * @param  { Object } fn 自定义注册事件
    *
    */
-  selected(id, flyTo = true) {
+  selected(id, fn, flyTo = true) {
     return new Promise((resolve, reject) => {
       let itemModel = this.map.getLayer(id, "modelId");
       if (itemModel) {
@@ -303,7 +302,7 @@ class BimModel {
         /**
          *  模型因为动态释放没有加载地图上
          */
-        this.add(id).then((item) => {
+        this.add(id, fn).then((item) => {
           if (item) {
             if (flyTo) item.flyTo();
             if (item.style == null && map.bimMapEdit == "0") {
@@ -365,28 +364,35 @@ class BimModel {
 
   /**
    * 更新模型颜色
-   * @param  { String } id 模型属性
+   * @param  { String | Object} id 模型属性 或者 模型对象
    * @param  { String | Number } newColor 需要着色的颜色
    * @param  { String } selectcontent 判断逻辑 默认是全部染色
    */
   editColor(id, newColor, selectcontent = "true") {
-    let itemModel = this.map.getLayer(id, "modelId");
-    // 更新用户操作模型
-    this.postEditDate(id);
-    if (newColor) {
-      itemModel.style = {
-        color: {
-          conditions: [[selectcontent, newColor]],
-        },
-      };
+    let itemModel;
+    if (typeof id != "object") {
+      itemModel = this.map.getLayer(id, "modelId");
     } else {
-      // 如果模型有自带颜色就染色 没有就移除
-      let oldColor = this.query(id).modelColor;
-      oldColor
-        ? (itemModel.style = {
-            color: { conditions: [[selectcontent, oldColor]] },
-          })
-        : (itemModel.style = null);
+      itemModel = id;
+    }
+    // 更新用户操作模型
+    if (itemModel) {
+      this.postEditDate(id);
+      if (newColor) {
+        itemModel.style = {
+          color: {
+            conditions: [[selectcontent, newColor]],
+          },
+        };
+      } else {
+        // 如果模型有自带颜色就染色 没有就移除
+        let oldColor = this.query(id).modelColor;
+        oldColor
+          ? (itemModel.style = {
+              color: { conditions: [[selectcontent, oldColor]] },
+            })
+          : (itemModel.style = null);
+      }
     }
   }
   /**

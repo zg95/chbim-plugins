@@ -1,13 +1,13 @@
 /**
  * 注记动态遮蔽 V1.0.0
  */
-
 import { gsap } from "gsap";
 import _ from "lodash";
 class DynamicMasking {
   Cesium: any;
   _map: any;
   DynamicMaskingArr!: any[];
+  DynamicMaskingStyle!: any[];
   canvasClientWidth: any;
   canvasClientHeight: any;
   oldSet!: Set<unknown>;
@@ -19,6 +19,8 @@ class DynamicMasking {
       this.Cesium = (window as any).mars3d.Cesium;
       // 需要操作的矢量数据
       this.DynamicMaskingArr = [];
+      // 矢量样式数据
+      this.DynamicMaskingStyle = [];
       this.canvasClientWidth = map.viewer.canvas.clientWidth;
       this.canvasClientHeight = map.viewer.canvas.clientHeight;
       this.oldSet = new Set(); // 记录前一次显示的label的id
@@ -35,6 +37,7 @@ class DynamicMasking {
    * data 是数据 (地图对象隐藏的时候有些数据有问题 辅助作用)
    */
   add(item, data) {
+    console.log("DynamicMasking", item, data);
     let fontSize = item.options.symbol.styleOptions.label.font_size;
     let id = item.options.vectorId;
     let charWidth = Number(fontSize) * 1.4;
@@ -44,29 +47,43 @@ class DynamicMasking {
     let { color, outlineColor, backgroundColor } = label;
 
     item.eachGraphic((e) => {
-      this.DynamicMaskingArr.push({
-        id: id,
-        uid: e.id,
-        position: e._getLablePosition(),
-        label: e.name,
-        width: charWidth * e.name.length,
-        height: charHeight,
-        color,
-        outline: data.label.outline,
-        outlineColor,
-        background: data.label.background,
-        backgroundColor,
-        dynamicMaskingColor: {
-          backgroundColor: this.Cesium.Color.fromCssColorString(
-            data.label.backgroundColor
-          ),
-          color: this.Cesium.Color.fromCssColorString(data.label.color),
-          outlineColor: this.Cesium.Color.fromCssColorString(
-            data.label.outlineColor
-          ),
-        },
-      });
+      if (e.style.label)
+        this.DynamicMaskingArr.push({
+          id: id,
+          uid: e.id,
+          position: e._getLablePosition(),
+          label: e.name,
+          width: charWidth * e.name.length,
+          height: charHeight,
+          color,
+          outline: data.label.outline,
+          outlineColor,
+          background: data.label.background,
+          backgroundColor,
+          dynamicMaskingColor: {
+            backgroundColor: this.Cesium.Color.fromCssColorString(
+              data.label.backgroundColor
+            ),
+            color: this.Cesium.Color.fromCssColorString(data.label.color),
+            outlineColor: this.Cesium.Color.fromCssColorString(
+              data.label.outlineColor
+            ),
+          },
+        });
     });
+    this.DynamicMaskingStyle.push({
+      vectorId: item.options.vectorId,
+      outline: data.label.outline,
+      background: data.label.background,
+      color: this.Cesium.Color.fromCssColorString(data.label.color),
+      backgroundColor: this.Cesium.Color.fromCssColorString(
+        data.label.backgroundColor
+      ),
+      outlineColor: this.Cesium.Color.fromCssColorString(
+        data.label.outlineColor
+      ),
+    });
+
     this.oldSet = new Set(); // 记录前一次显示的label的id
     this.tweenMap = new Map();
   }
@@ -77,6 +94,9 @@ class DynamicMasking {
   remove(id) {
     this.DynamicMaskingArr = this.DynamicMaskingArr.filter(
       (user) => user.id !== id
+    );
+    this.DynamicMaskingStyle = this.DynamicMaskingStyle.filter(
+      (user) => user.vectorId !== id
     );
     this.oldSet = new Set(); // 记录前一次显示的label的id
     this.tweenMap = new Map();
@@ -286,7 +306,6 @@ class DynamicMasking {
     } else {
     }
   }
-  q;
 
   /**
    * 切换动态避让
@@ -298,7 +317,6 @@ class DynamicMasking {
     if (type) {
       this._map.getLayers().forEach((item) => {
         if (item.options?.vectorId) {
-          // console.log(item.options.symbol.styleOptions.label);
           let { color, outlineColor, backgroundColor } =
             item.options.symbol.styleOptions.label;
           item.eachGraphic((e) => {
@@ -316,28 +334,35 @@ class DynamicMasking {
         }
       });
     } else {
-      let vectorId, dynamicMaskingColor, vectorItem, background, outline;
-      this.DynamicMaskingArr.forEach((item) => {
-        if (vectorId == null || item.id != vectorId) {
-          dynamicMaskingColor = item.dynamicMaskingColor;
-          background = item.background;
-          outline = item.outline;
-          vectorItem = this._map.getLayer(item.id, "vectorId");
-        }
+      if (this.DynamicMaskingStyle.length > 0) {
+        let vectorItem;
+        this.DynamicMaskingStyle.forEach((item) => {
+          let {
+            color,
+            outline,
+            outlineColor,
+            background,
+            backgroundColor,
+            vectorId,
+          } = item;
 
-        vectorItem.eachGraphic((e) => {
-          e.setStyle({
-            label: {
-              color: dynamicMaskingColor.color,
-              outlineColor: dynamicMaskingColor.outlineColor,
-              backgroundColor: dynamicMaskingColor.backgroundColor,
-              show: true,
-              background,
-              outline,
-            },
-          });
+          vectorItem = this._map.getLayer(vectorId, "vectorId");
+
+          if (vectorItem)
+            vectorItem.eachGraphic((e) => {
+              e.setStyle({
+                label: {
+                  color,
+                  outlineColor,
+                  backgroundColor,
+                  show: true,
+                  background,
+                  outline,
+                },
+              });
+            });
         });
-      });
+      }
     }
     this.isDynamicMasking = type;
     (window as any).bimVector.switchDynamicMasking(type);
