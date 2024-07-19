@@ -5,9 +5,9 @@
  */
 
 class BimModel {
-  constructor(map, modelArr = []) {
+  constructor(modelArr = []) {
     if (mars3d) {
-      this.map = map;
+      // window.map = map;
       // 当前操作的模型对象
       this.tilesetLayer;
       // 所有模型数据
@@ -37,6 +37,8 @@ class BimModel {
    * @param  { Object } customAttributes 自定义属性
    */
   add(modelParameter, fn, customAttributes) {
+    console.log("customAttributes", customAttributes);
+    let isClone = customAttributes?.isClone;
     /**
      * modelId 模型id
      * modelType 模型类型 --  0 倾斜摄影  --  1 白膜  --  2 普通模型
@@ -88,14 +90,29 @@ class BimModel {
         url = modelParameter.url;
         color = modelParameter.color;
       }
+      // 裁剪对象
+      let clip = { enabled: true, precise: false };
+      let flat = { enabled: true, precise: false };
       // 自定义属性
-      if (customAttributes && customAttributes.color)
-        color = customAttributes.color;
-
-      let itemModel = this.map.getLayer(modelParameter, "modelId");
+      if (customAttributes) {
+        if (customAttributes.color) color = customAttributes.color;
+        if (customAttributes.clip) {
+          clip.area = customAttributes.clip.handleDataList;
+        }
+        if (customAttributes.flat) {
+          flat.area = customAttributes.flat.handleDataList;
+        }
+      }
+      let itemModel = window.map.getLayer(modelParameter, "modelId");
 
       if (itemModel) {
         resolve(itemModel);
+        if (customAttributes.color)
+          this.editColor(
+            modelParameter,
+            customAttributes.color,
+            customAttributes
+          );
         return false;
       } else {
         /**
@@ -125,30 +142,10 @@ class BimModel {
           .fetchJson()
           .then((jsonData) => {
             let style = null;
-            // let highlight = null;
-            let clip = { enabled: true, precise: false };
-            let area = [];
             if (color) {
               style = {
                 color: { conditions: [["true", color]] },
               };
-            }
-
-            if (window.bimClip && window.bimClip.activeObj[modelId]) {
-              Object.keys(window.bimClip.activeObj[modelId]).forEach((key) => {
-                let { item } = window.bimClip.activeObj[modelId][key];
-                let { bimModelExcavationDetails } = item;
-                let { excavationDetails } = bimModelExcavationDetails;
-                area.push({
-                  positions: JSON.parse(excavationDetails).excavationDetails,
-                  id: Number(key),
-                });
-              });
-
-              if (area.length > 0) {
-                clip.area = area;
-              }
-              // console.log("clip", clip);
             }
 
             // 通过对象添加
@@ -161,10 +158,6 @@ class BimModel {
               permission,
               customize,
               url: encodeURI(url),
-              flat: {
-                precise: false,
-                enabled: true,
-              },
               skipLevelOfDetail: true,
               loadSiblings: true,
               cullRequestsWhileMoving: true,
@@ -175,6 +168,7 @@ class BimModel {
               preloadWhenHidden: false,
               style,
               clip,
+              flat,
               cacheBytes: 1073741824 * 2, // 1024MB = 1024*1024*1024
               maximumCacheOverflowBytes: 2147483648 * 2, // 2048MB = 2048*1024*1024
               // 1.04版本
@@ -210,7 +204,6 @@ class BimModel {
 
             this.tilesetLayer.readyPromise
               .then((e) => {
-                console.log("加载完成", this.tilesetLayer, e);
                 // 加载完成
                 // 处理  剪切面
                 resolve(e);
@@ -247,7 +240,12 @@ class BimModel {
             if (modelType == 0) {
               this.bimObliquePhotographyId.push(modelId);
             }
-            this.map.addLayer(this.tilesetLayer);
+            if (isClone) {
+              if (window.mapClone)
+                window.mapClone.mapEx.addLayer(this.tilesetLayer);
+            } else {
+              window.map.addLayer(this.tilesetLayer);
+            }
           })
           .catch((error) => {
             console.error("数据加载失败", modelTitle);
@@ -267,11 +265,20 @@ class BimModel {
    * @param  { String } id 模型id
    *
    */
-  remove(id) {
-    let item = this.map.getLayer(id, "modelId");
+  remove(id, customAttributes) {
+    let isClone = customAttributes?.isClone;
+    let item = window.map.getLayer(id, "modelId");
     if (item) {
-      this.map.getLayer(id, "modelId").closeHighlight();
-      this.map.removeLayer(this.map.getLayer(id, "modelId"));
+      if (isClone) {
+        window.mapClone.mapEx.getLayer(id, "modelId").closeHighlight();
+
+        window.mapClone.mapEx.removeLayer(
+          window.mapClone.mapEx.getLayer(id, "modelId")
+        );
+      } else {
+        window.map.getLayer(id, "modelId").closeHighlight();
+        window.map.removeLayer(window.map.getLayer(id, "modelId"));
+      }
     }
   }
 
@@ -281,9 +288,9 @@ class BimModel {
    * @param  { Object } fn 自定义注册事件
    *
    */
-  selected(id, fn, flyTo = true) {
+  selected(id, fn, customAttributes, flyTo = true) {
     return new Promise((resolve, reject) => {
-      let itemModel = this.map.getLayer(id, "modelId");
+      let itemModel = window.map.getLayer(id, "modelId");
       if (itemModel) {
         if (flyTo) itemModel.flyTo();
         /**
@@ -302,7 +309,7 @@ class BimModel {
         /**
          *  模型因为动态释放没有加载地图上
          */
-        this.add(id, fn).then((item) => {
+        this.add(id, fn, customAttributes).then((item) => {
           if (item) {
             if (flyTo) item.flyTo();
             if (item.style == null && map.bimMapEdit == "0") {
@@ -349,7 +356,7 @@ class BimModel {
    * @returns { Object || Boolean } 返回标绘实体
    */
   queryModel(id) {
-    return this.map.getLayer(id, "modelId");
+    return window.map.getLayer(id, "modelId");
   }
 
   /**
@@ -368,16 +375,23 @@ class BimModel {
    * @param  { String | Number } newColor 需要着色的颜色
    * @param  { String } selectcontent 判断逻辑 默认是全部染色
    */
-  editColor(id, newColor, selectcontent = "true") {
+  editColor(id, newColor, customAttributes, selectcontent = "true") {
     let itemModel;
+    let isClone = customAttributes?.isClone;
+    console.log("editColor", customAttributes);
     if (typeof id != "object") {
-      itemModel = this.map.getLayer(id, "modelId");
-    } else {
-      itemModel = id;
+      if (isClone) {
+        itemModel = window.mapClone.mapEx.getLayer(id, "modelId");
+      } else {
+        itemModel = window.map.getLayer(id, "modelId");
+      }
     }
+    // else {
+    //   itemModel = id;
+    // }
     // 更新用户操作模型
     if (itemModel) {
-      this.postEditDate(id);
+      // this.postEditDate(id);
       if (newColor) {
         itemModel.style = {
           color: {
@@ -401,7 +415,7 @@ class BimModel {
    * @param  { String | Number } opacity 透明度值
    */
   editOpacity(id, opacity) {
-    this.map.getLayer(id, "modelId").opacity = opacity;
+    window.map.getLayer(id, "modelId").opacity = opacity;
   }
 
   /**
@@ -427,6 +441,5 @@ class BimModel {
       console.log("挖洞工具未初始化");
     }
   }
-  // tilesetLayer.clip.clear()
 }
 export default BimModel;

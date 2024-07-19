@@ -10,7 +10,6 @@ import _ from "lodash";
 class BimVector {
   constructor(map, vectorArr = [], isDynamicMasking = false) {
     if (mars3d) {
-      this.map = map;
       this.vectorArr = vectorArr;
       /**
        *
@@ -49,9 +48,16 @@ class BimVector {
    * @param  { String } id 矢量数据id
    *
    */
-  remove(id) {
-    this.map.removeLayer(this.map.getLayer(id, "vectorId"));
-    window.dynamicMasking.remove(id);
+  remove(id, customAttributes = null) {
+    if (customAttributes) {
+      if (customAttributes.isClone)
+        window.mapClone.mapEx.removeLayer(
+          window.mapClone.mapEx.getLayer(id, "vectorId")
+        );
+    } else {
+      window.map.removeLayer(window.map.getLayer(id, "vectorId"));
+      if (window.dynamicMasking) window.dynamicMasking.remove(id);
+    }
   }
 
   /**
@@ -74,24 +80,25 @@ class BimVector {
   /**
    * add 矢量数据
    * @param  { String } modelParameter 模型属性 或者 模型id
-   * @param  { Object } fn 自定义注册事件
+   * @param  { Object } customAttributes 自定义属性
    */
-  add(modelParameter, fn) {
+  add(modelParameter, customAttributes) {
     return new Promise((resolve, reject) => {
       /**
        * 判断是用id加载 还是 对象加载
        * */
-      let item, itemVecto;
+      let item,
+        isClone = customAttributes?.isClone;
       if (typeof modelParameter != "object") {
         // id加载
-        let itemVector = this.map.getLayer(modelParameter, "vectorId");
+        let itemVector = window.map.getLayer(modelParameter, "vectorId");
         if (itemVector) {
           return resolve(itemVector);
         }
         item = this.query(modelParameter);
       } else {
         // 对象加载
-        let itemVector = this.map.getLayer(modelParameter.id, "vectorId");
+        let itemVector = window.map.getLayer(modelParameter.id, "vectorId");
         if (itemVector) {
           return resolve(itemVector);
         }
@@ -128,8 +135,6 @@ class BimVector {
               classificationType,
             } = JSON.parse(attributes);
             let shpLayer;
-            console.log("geometryType", geometryType);
-
             /**
              * 为动态避让添加透明度;
              **/
@@ -184,7 +189,7 @@ class BimVector {
                       label,
                     },
                   },
-                  popup: `&nbsp;&nbsp; ${title} &nbsp;&nbsp;`,
+                  // popup: `&nbsp;&nbsp; ${title} &nbsp;&nbsp;`,
                   hasZIndex: true,
                   zIndex: zIndex,
                 });
@@ -219,7 +224,7 @@ class BimVector {
                       label,
                     },
                   },
-                  popup: `&nbsp;&nbsp; ${title} &nbsp;&nbsp;`,
+                  // popup: `&nbsp;&nbsp; ${title} &nbsp;&nbsp;`,
                 });
                 break;
 
@@ -245,7 +250,11 @@ class BimVector {
                 break;
             }
 
-            window.map.addLayer(shpLayer);
+            if (isClone) {
+              window.mapClone.mapEx.addLayer(shpLayer);
+            } else {
+              window.map.addLayer(shpLayer);
+            }
 
             shpLayer.bindPopup((event) => {
               console.log("event", event);
@@ -255,10 +264,11 @@ class BimVector {
               console.log("测试shp矢量加载完成");
               window.dynamicMasking.add(e, JSON.parse(attributes));
             }, 500);
+
             shpLayer.readyPromise
               .then((e) => {
                 // 加载完成
-                freed(e);
+                if (window.dynamicMasking) freed(e);
                 resolve(e);
               })
               .catch((e) => {
@@ -342,7 +352,6 @@ class BimVector {
      * distanceDisplayCondition => 是否按视距显示 或 指定此框将显示在与摄像机的多大距离。
      * classificationType => 指定贴地时的覆盖类型，是只对地形、3dtiles 或 两者同时。
      */
-    console.log("minDistinct", minDistinct);
     let polygon = {
       fill,
       color: areaColor,
@@ -392,11 +401,12 @@ class BimVector {
    *
    */
   selected(id) {
-    this.map.getLayer(id, "vectorId").flyTo();
+    if (window.map.getLayer(id, "vectorId"))
+      window.map.getLayer(id, "vectorId").flyTo();
   }
 
   /**
-   * 查询矢量数据的对象
+   * 查询矢量数据的对象wwwwwwwwww
    * @param  { String } id 矢量id
    * @returns { Object || Boolean } 查询出来的树对象 或者 false
    */
@@ -408,6 +418,15 @@ class BimVector {
   }
 
   /**
+   * 查询矢量实体的对象
+   * @param  { String } id 矢量id
+   * @returns { Object || Boolean } 查询出来的树对象 或者 false
+   */
+  queryVector(id) {
+    return window.map.getLayer(id, "vectorId");
+  }
+
+  /**
    * 批量编辑矢量
    * @param  { String } id 对象id
    * @param  { Object } vector 矢量对象
@@ -415,11 +434,9 @@ class BimVector {
    * @returns { Object }
    */
   editVector(id, vector, label) {
-    let vectorItem = this.map.getLayer(id, "vectorId");
+    let vectorItem = window.map.getLayer(id, "vectorId");
     // 样式数据
     let newStyle = updateStyle(vector, label);
-
-    console.log("编辑数据", newStyle);
     if (vectorItem) {
       // 已开启编辑
       vectorItem.eachGraphic((e) => {
@@ -435,7 +452,7 @@ class BimVector {
         });
       });
 
-      dynamicMasking.modify(id, newStyle);
+      if (window.dynamicMasking) dynamicMasking.modify(id, newStyle);
     }
   }
 

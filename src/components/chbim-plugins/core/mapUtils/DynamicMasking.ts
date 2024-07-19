@@ -15,7 +15,6 @@ class DynamicMasking {
   isDynamicMasking!: boolean;
   constructor(map, isDynamicMasking = false) {
     if ((window as any).mars3d) {
-      if (map && map != undefined) this._map = map;
       this.Cesium = (window as any).mars3d.Cesium;
       // 需要操作的矢量数据
       this.DynamicMaskingArr = [];
@@ -37,7 +36,6 @@ class DynamicMasking {
    * data 是数据 (地图对象隐藏的时候有些数据有问题 辅助作用)
    */
   add(item, data) {
-    console.log("DynamicMasking", item, data);
     let fontSize = item.options.symbol.styleOptions.label.font_size;
     let id = item.options.vectorId;
     let charWidth = Number(fontSize) * 1.4;
@@ -118,7 +116,7 @@ class DynamicMasking {
       let { color, outline, outlineColor, background, backgroundColor } = label;
       this.DynamicMaskingArr.forEach((item) => {
         if (item.id === id) {
-          console.log(item);
+          // console.log(item);
           if (color != undefined) {
             item.color = this.Cesium.Color.fromCssColorString(color);
             item.dynamicMaskingColor.color =
@@ -151,7 +149,7 @@ class DynamicMasking {
    */
   getBoundingRectangle(label) {
     var pos = this.Cesium.SceneTransforms.wgs84ToWindowCoordinates(
-      this._map.viewer.scene,
+      (window as any).map.viewer.scene,
       label.position
     );
 
@@ -238,7 +236,6 @@ class DynamicMasking {
             tween.kill();
             this.tweenMap.delete(id);
           }
-
           var tween: any = gsap.to(labelObj2, {
             duration: 0.2,
             color: 0,
@@ -249,10 +246,10 @@ class DynamicMasking {
               item.backgroundColor.alpha = labelObj2.backgroundColor;
               item.color.alpha = labelObj2.color;
               item.outlineColor.alpha = labelObj2.outlineColor;
-              this._map
+              (window as any).map
                 .getLayer(item.id, "vectorId")
-                .getGraphicByAttr(item.uid)
-                .setStyle({
+                ?.getGraphicByAttr(item.uid)
+                ?.setStyle({
                   label: {
                     show: false,
                     outline: false,
@@ -284,10 +281,10 @@ class DynamicMasking {
               item.backgroundColor.alpha = labelObj.backgroundColor;
               item.color.alpha = labelObj.color;
               item.outlineColor.alpha = labelObj.outlineColor;
-              this._map
+              (window as any).map
                 .getLayer(item.id, "vectorId")
-                .getGraphicByAttr(item.uid)
-                .setStyle({
+                ?.getGraphicByAttr(item.uid)
+                ?.setStyle({
                   label: {
                     show: true,
                     outline: item.outline,
@@ -313,9 +310,8 @@ class DynamicMasking {
    */
   switchDynamicMasking(type) {
     //首先获取地图上所有已经加载的矢量数据
-    // console.log("store", store.defaultCheckedKeys);
     if (type) {
-      this._map.getLayers().forEach((item) => {
+      (window as any).map.getLayers().forEach((item) => {
         if (item.options?.vectorId) {
           let { color, outlineColor, backgroundColor } =
             item.options.symbol.styleOptions.label;
@@ -346,7 +342,7 @@ class DynamicMasking {
             vectorId,
           } = item;
 
-          vectorItem = this._map.getLayer(vectorId, "vectorId");
+          vectorItem = (window as any).map.getLayer(vectorId, "vectorId");
 
           if (vectorItem)
             vectorItem.eachGraphic((e) => {

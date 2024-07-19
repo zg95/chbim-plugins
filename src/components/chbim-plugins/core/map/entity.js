@@ -5,16 +5,20 @@
  */
 import { updateStyle } from "../mapUtils/BaseGraphicStyle.js";
 class BimEntity {
-  constructor(map, entityArr = [], fn) {
+  constructor(entityArr = [], fn) {
     if (mars3d) {
-      this.map = map;
       // 标绘实例数组
       this.entityArr = entityArr;
       // 标绘实例图层
-      this.entityLayer = map.getLayer("bimEntity", "entityId");
+      this.entityLayer = new mars3d.layer.GraphicLayer({
+        entityId: "bimEntity",
+      });
+      window.map.addLayer(this.entityLayer);
+
       // 当前编辑的标绘
       this.entityItem = null;
       this.events = {};
+      this.entityCloneLayer;
     } else {
       console.error("未引入指定插件");
     }
@@ -23,12 +27,12 @@ class BimEntity {
   /**
    * events
    * 事件监听
-   * @param  { string } event - 事件名 目前只支持enter和leave
+   * @param  { string } event - 事件名 目前只支持change和collection
    * @param  { function } fn - 回调函数
    * @returns { any }
    */
   on(event, fn) {
-    if (event == "change") {
+    if (event == "change" || event == "collection") {
       this.events[event]
         ? this.events[event].push(fn)
         : (this.events[event] = [fn]);
@@ -80,44 +84,56 @@ class BimEntity {
    * @param  { String } modelParameter 标绘实例id 或者 标绘参数
    *
    */
-  add(modelParameter, entityId) {
+  add(modelParameter, entityId = null, customAttributes) {
     return new Promise((resolve, reject) => {
       if (this.entityLayer) {
-        let itemEntity, item, graphic;
-        // graphic 矢量对象数据
-        if (typeof modelParameter != "object") {
-          itemEntity = this.entityLayer.getGraphicByAttr(
-            modelParameter,
-            "entityId"
-          );
-          item = this.query(modelParameter);
-          graphic = JSON.parse(item.bimPlanPainting.graphic);
-          graphic.attr = graphic.attr || {};
-          graphic.attr.entityId = modelParameter;
-        } else {
-          itemEntity = this.entityLayer.getGraphicByAttr(
-            modelParameter.id,
-            "entityId"
-          );
-          graphic = JSON.parse(JSON.stringify(modelParameter));
-          graphic.attr = graphic.attr || {};
-          graphic.attr.entityId = graphic.attr.entityId || entityId;
-          if (graphic.attr == undefined) {
-            graphic.attr = {
-              entityId: modelParameter.id,
-            };
-          } else if (graphic.attr?.entityId == undefined && entityId) {
-            graphic.attr.entityId = entityId;
+        let itemEntity,
+          item,
+          graphic,
+          isClone = customAttributes?.isClone;
+        if (isClone) {
+          if (this.entityCloneLayer) {
+            item = this.query(modelParameter);
+            graphic = JSON.parse(item.bimPlanPainting.graphic);
+            graphic.attr = graphic.attr || {};
+            graphic.attr.entityId = modelParameter;
+            this.entityCloneLayer.addGraphic(graphic);
           }
-        }
-
-        if (itemEntity) {
-          return resolve();
         } else {
-          // 添加标绘
-          console.log(graphic);
-          this.entityLayer.addGraphic(graphic);
-          resolve(graphic);
+          // graphic 矢量对象数据
+          if (typeof modelParameter != "object") {
+            itemEntity = this.entityLayer.getGraphicByAttr(
+              modelParameter,
+              "entityId"
+            );
+            item = this.query(modelParameter);
+            graphic = JSON.parse(item.bimPlanPainting.graphic);
+            graphic.attr = graphic.attr || {};
+            graphic.attr.entityId = modelParameter;
+          } else {
+            itemEntity = this.entityLayer.getGraphicByAttr(
+              modelParameter.id,
+              "entityId"
+            );
+            graphic = JSON.parse(JSON.stringify(modelParameter));
+            graphic.attr = graphic.attr || {};
+            graphic.attr.entityId = graphic.attr.entityId || entityId;
+            if (graphic.attr == undefined) {
+              graphic.attr = {
+                entityId: modelParameter.id,
+              };
+            } else if (graphic.attr?.entityId == undefined && entityId) {
+              graphic.attr.entityId = entityId;
+            }
+          }
+
+          if (itemEntity) {
+            return resolve();
+          } else {
+            // 添加标绘
+            this.entityLayer.addGraphic(graphic);
+            resolve(graphic);
+          }
         }
       } else {
         resolve();
@@ -153,8 +169,9 @@ class BimEntity {
    * @param  { String } id 模型id
    *
    */
-  selected(id) {
-    let item = this.entityLayer.getGraphicByAttr(id, "entityId");
+  selected(id, customAttributes = null) {
+    let item = this.entityLayer.getGraphicByAttr(id, "entityId"),
+      isClone = customAttributes?.isClone;
     if (item._point && item._point._alt > 0) {
       item.flyTo({
         radius: item._point._alt + 500,
@@ -169,16 +186,42 @@ class BimEntity {
    * @param  { String } id 模型id
    *
    */
-  remove(id) {
-    if (this.entityLayer.getGraphicByAttr(id, "entityId")) {
-      this.entityLayer.getGraphicByAttr(id, "entityId").remove();
-      if (
-        this.entityItem &&
-        (this.entityItem._state == "destroy" ||
-          this.entityItem.options.attr.entityId == id)
-      )
-        this.entityItem = null;
+  remove(id, customAttributes = null) {
+    let isClone = customAttributes?.isClone;
+    if (isClone) {
+      if (this.entityCloneLayer) {
+        this.entityCloneLayer.getGraphicByAttr(id, "entityId").remove();
+      }
+    } else {
+      if (this.entityLayer.getGraphicByAttr(id, "entityId")) {
+        this.entityLayer.getGraphicByAttr(id, "entityId").remove();
+        if (
+          this.entityItem &&
+          (this.entityItem._state == "destroy" ||
+            this.entityItem.options.attr.entityId == id)
+        )
+          this.entityItem = null;
+      }
     }
+  }
+
+  entityCloneLayerInit() {
+    if (this.entityCloneLayer == null) {
+      this.entityCloneLayer = window.mapClone._mapEx.getLayer(
+        "bimEntity",
+        "entityId"
+      );
+    }
+  }
+
+  /**
+   * 移除克隆场景的标绘
+   *
+   */
+  entityCloneLayerRemove() {
+    console.log("没用移除");
+    this.entityCloneLayer.remove();
+    this.entityCloneLayer = null;
   }
 
   /**
@@ -206,7 +249,6 @@ class BimEntity {
    */
   startDrawGraphic(data) {
     let { type, style } = data;
-    console.log(data);
     if (type == "div") {
       if (style.html) {
         // 收藏添加
@@ -307,7 +349,7 @@ class BimEntity {
   edit(id, vector, label, customType) {
     let newStyle = updateStyle(vector, label);
     if (vector.vectorStyle && this.entityItem) {
-      console.log("edit", vector.vectorStyle.divType, this.entityItem);
+      // console.log("edit", vector.vectorStyle.divType, this.entityItem);
       // 已开启编辑
       if (vector.vectorStyle.divType == 5) {
         // 轴心变化 比较重要
@@ -316,7 +358,7 @@ class BimEntity {
           horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
         });
       } else {
-        console.log("newStyle", newStyle);
+        // console.log("newStyle", newStyle);
         this.entityItem.setStyle({
           ...newStyle,
           // horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
@@ -349,6 +391,12 @@ class BimEntity {
         text: "编辑对象",
         callback: (e) => {
           this.emit("change", e);
+        },
+      },
+      {
+        text: "收藏对象",
+        callback: (e) => {
+          this.emit("collection", e);
         },
       },
     ]);

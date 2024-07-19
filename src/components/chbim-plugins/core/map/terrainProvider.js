@@ -3,19 +3,18 @@
  * @param  { Object } map  地图对象（主地图）
  */
 class BimTerrainProvider {
-  constructor(map, terrainProviderArr = []) {
+  constructor(terrainProviderArr = []) {
     if (mars3d) {
-      this.map = map;
       this.terrainProviderArr = terrainProviderArr;
       this.terrainProviderId = "";
       this.events = {};
-      this.map.on(mars3d.EventType.terrainLoadError, (event) => {
+      window.map.on(mars3d.EventType.terrainLoadError, (event) => {
         console.error("地形服务加载失败", event);
         this.hide();
       });
-      this.map.viewer.scene.globe.tileLoadProgressEvent.addEventListener(
+      window.map.viewer.scene.globe.tileLoadProgressEvent.addEventListener(
         (queuedTileCount) => {
-          if (this.map.viewer.scene.globe.tilesLoaded) {
+          if (window.map.viewer.scene.globe.tilesLoaded) {
             this.emit("load", queuedTileCount);
           }
         }
@@ -32,11 +31,11 @@ class BimTerrainProvider {
   add(terrainProviderParameter) {
     let { url, id } = terrainProviderParameter;
 
-    if (this.terrainProviderId == id && this.map.terrainProvider._layers) {
+    if (this.terrainProviderId == id && window.map.terrainProvider._layers) {
       return false;
     }
 
-    this.map.terrainProvider = mars3d.LayerUtil.createTerrainProvider({
+    window.map.terrainProvider = mars3d.LayerUtil.createTerrainProvider({
       imageXyzId: id,
       type: "xyz",
       url: url, //item.gisInfo.gisUrl,
@@ -51,7 +50,7 @@ class BimTerrainProvider {
    *
    */
   show() {
-    this.map.hasTerrain = true;
+    window.map.hasTerrain = true;
   }
 
   /**
@@ -59,7 +58,7 @@ class BimTerrainProvider {
    *
    */
   hide() {
-    this.map.hasTerrain = false;
+    window.map.hasTerrain = false;
   }
 
   /**

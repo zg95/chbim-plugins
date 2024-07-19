@@ -4,9 +4,8 @@
  * @param  { Array } elevationImageArr  影像数组
  */
 class BimElevationImage {
-  constructor(map, elevationImageArr = []) {
+  constructor(elevationImageArr = []) {
     if (mars3d) {
-      this.map = map;
       this.elevationImageArr = elevationImageArr;
       this.elevationImageLayer;
       // 默认数据
@@ -47,7 +46,7 @@ class BimElevationImage {
     typeof xyzParameter != "object"
       ? (repeatedId = xyzParameter)
       : (repeatedId = xyzParameter.imageXyzId);
-    if (this.map.getLayer(repeatedId, "imageXyzId")) {
+    if (window.map.getLayer(repeatedId, "imageXyzId")) {
       return false;
     }
 
@@ -99,7 +98,7 @@ class BimElevationImage {
       this.elevationImageLayer.on(mars3d.EventType.load, (event) => {
         resolve(event);
       });
-      this.map.addLayer(this.elevationImageLayer);
+      window.map.addLayer(this.elevationImageLayer);
       // 自定义注册事件
       if (fn) {
         Object.keys(fn).forEach((item) => {
@@ -118,7 +117,7 @@ class BimElevationImage {
    */
   remove(id) {
     console.log(id);
-    this.map.removeLayer(this.map.getLayer(id, "imageXyzId"));
+    window.map.removeLayer(window.map.getLayer(id, "imageXyzId"));
   }
 
   /**
