@@ -20,7 +20,6 @@ class BimElevationImage {
         layerSaturation: 1, //瓦片饱和度
         layerGamma: 1, //瓦片伽马值
       };
-      // console.log("elevationImageArr", this.elevationImageArr);
     } else {
       console.error("未引入指定插件");
     }

@@ -20378,7 +20378,7 @@ class c1 {
           permission: I,
           customize: F,
           url: encodeURI(E),
-          skipLevelOfDetail: !0,
+          skipLevelOfDetail: !1,
           loadSiblings: !0,
           cullRequestsWhileMoving: !0,
           cullRequestsWhileMovingMultiplier: 10,
@@ -20510,7 +20510,7 @@ class c1 {
    */
   editColor(l, o, p, d = "true") {
     let u, m = p == null ? void 0 : p.isClone;
-    if (console.log("editColor", p), typeof l != "object" && (m ? u = window.mapClone.mapEx.getLayer(l, "modelId") : u = window.map.getLayer(l, "modelId")), u)
+    if (typeof l != "object" && (m ? u = window.mapClone.mapEx.getLayer(l, "modelId") : u = window.map.getLayer(l, "modelId")), u)
       if (o)
         u.style = {
           color: {

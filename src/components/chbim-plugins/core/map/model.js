@@ -158,7 +158,7 @@ class BimModel {
               permission,
               customize,
               url: encodeURI(url),
-              skipLevelOfDetail: true,
+              skipLevelOfDetail: false,
               loadSiblings: true,
               cullRequestsWhileMoving: true,
               cullRequestsWhileMovingMultiplier: 10,
@@ -378,7 +378,6 @@ class BimModel {
   editColor(id, newColor, customAttributes, selectcontent = "true") {
     let itemModel;
     let isClone = customAttributes?.isClone;
-    console.log("editColor", customAttributes);
     if (typeof id != "object") {
       if (isClone) {
         itemModel = window.mapClone.mapEx.getLayer(id, "modelId");
@@ -386,12 +385,8 @@ class BimModel {
         itemModel = window.map.getLayer(id, "modelId");
       }
     }
-    // else {
-    //   itemModel = id;
-    // }
     // 更新用户操作模型
     if (itemModel) {
-      // this.postEditDate(id);
       if (newColor) {
         itemModel.style = {
           color: {
