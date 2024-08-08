@@ -20335,7 +20335,10 @@ class c1 {
   add(l, o, p) {
     console.log("customAttributes", p);
     let d = p == null ? void 0 : p.isClone;
-    const u = /* @__PURE__ */ new Map([["click", mars3d.EventType.click]]);
+    const u = /* @__PURE__ */ new Map([
+      ["click", mars3d.EventType.click],
+      ["initialTilesLoaded", mars3d.EventType.initialTilesLoaded]
+    ]);
     return new Promise((m, _) => {
       let T, S, C, z, B, I, F, E, L;
       if (typeof l != "object") {
@@ -20358,7 +20361,7 @@ class c1 {
         ), !1;
       if (E.indexOf("tileset.json") < 0)
         return console.error("链接不完整", B), m({
-          tite: "【模型】" + B + "数据地址有误",
+          tite: "【模型】<" + B + ">链接地址有误",
           type: "error",
           id: T,
           url: E
@@ -20389,6 +20392,8 @@ class c1 {
           style: N,
           clip: x,
           flat: M,
+          maximumScreenSpaceError: 16,
+          maximumMemoryUsage: 1024,
           cacheBytes: 1073741824 * 2,
           // 1024MB = 1024*1024*1024
           maximumCacheOverflowBytes: 2147483648 * 2
@@ -20426,7 +20431,7 @@ class c1 {
         }), S == 0 && this.bimObliquePhotographyId.push(T), d ? window.mapClone && window.mapClone.mapEx.addLayer(this.tilesetLayer) : window.map.addLayer(this.tilesetLayer);
       }).catch((U) => {
         console.error("数据加载失败", B), m({
-          tite: "【模型】" + B + "数据加载失败",
+          tite: "【模型】<" + B + ">无法加载",
           type: "error",
           id: T,
           url: E
@@ -20454,18 +20459,26 @@ class c1 {
   selected(l, o, p, d = !0) {
     return new Promise((u, m) => {
       let _ = window.map.getLayer(l, "modelId");
-      _ ? (d && _.flyTo(), _.style == null && map.bimMapEdit == "0" && _.openHighlight(
+      _ ? (_.style == null && map.bimMapEdit == "0" && _.openHighlight(
         {
           color: "rgba(255,0,0,1)"
         },
         !0
-      ), u(_)) : this.add(l, o, p).then((T) => {
-        T && (d && T.flyTo(), T.style == null && map.bimMapEdit == "0" && T.openHighlight(
+      ), d ? _.flyTo({
+        complete: () => {
+          u(_);
+        }
+      }) : u(_)) : this.add(l, o, p).then((T) => {
+        T && (T.style == null && map.bimMapEdit == "0" && T.openHighlight(
           {
             color: "rgba(255,0,0,1)"
           },
           !0
-        ), u(T));
+        ), d ? T.flyTo({
+          complete: () => {
+            u(T);
+          }
+        }) : u(T));
       });
     });
   }
@@ -24538,7 +24551,7 @@ class f1 {
             window.dynamicMasking && ke(fe), p(fe);
           }).catch((fe) => {
             console.error("测试shp矢量加载失败", fe), p({
-              tite: "【矢量】" + F + "加载失败",
+              tite: "【矢量】<" + F + ">无法加载",
               type: "error",
               id: I,
               url: T
@@ -24546,14 +24559,14 @@ class f1 {
           });
         } else
           p({
-            tite: "【矢量】" + F + "加载失败",
+            tite: "【矢量】<" + F + ">无法加载",
             type: "error",
             id: I,
             url: T
           });
       }).catch((B) => {
         console.error("数据有误", B), p({
-          tite: "【矢量】" + C + "数据有误",
+          tite: "【矢量】<" + C + ">链接地址有误",
           type: "error",
           id: S,
           url: T
@@ -24859,14 +24872,14 @@ class d1 {
       surfaceOpacity: C
     } = this.exposureEnvironmentSettings();
     return new Promise((z, B) => {
-      let I, F, E, L, x;
+      let I, F, E, L, x, M;
       if (typeof l != "object") {
-        let M = this.query(l);
-        M || B("缺少树结构");
-        let { gisInfo: R } = M;
-        I = R.id, E = R.order, F = M.url, L = R.minLevel, x = R.maxLevel;
+        let R = this.query(l);
+        R || B("缺少树结构");
+        let { gisInfo: b } = R;
+        I = b.id, E = b.order, F = R.url, L = b.minLevel, x = b.maxLevel;
       } else
-        I = l.imageXyzId, F = l.url, E = l.zIndex, L = l.minimumLevel, x = l.maximumLevel;
+        I = l.imageXyzId, F = l.url, E = l.zIndex, L = l.minimumLevel, x = l.maximumLevel, M = l.chinaCRS;
       this.elevationImageLayer = new mars3d.layer.XyzLayer({
         imageXyzId: I,
         type: "xyz",
@@ -24886,12 +24899,15 @@ class d1 {
         alpha: C,
         show: !0,
         minimumLevel: L || 0,
-        maximumLevel: x || 15
-      }), this.elevationImageLayer.on(mars3d.EventType.load, (M) => {
-        z(M);
-      }), window.map.addLayer(this.elevationImageLayer), o && Object.keys(o).forEach((M) => {
-        this.elevationImageLayer.on(fnType.get(M), (R) => {
-          o[M](R);
+        maximumLevel: x || 15,
+        chinaCRS: M
+        // queryParameters: { token: "zhang" },
+        // headers: { Authorization: "zhang" },
+      }), this.elevationImageLayer.on(mars3d.EventType.load, (R) => {
+        z(R);
+      }), window.map.addLayer(this.elevationImageLayer), o && Object.keys(o).forEach((R) => {
+        this.elevationImageLayer.on(fnType.get(R), (b) => {
+          o[R](b);
         });
       });
     });

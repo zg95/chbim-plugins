@@ -51,7 +51,10 @@ class BimModel {
      * url 模型链接
      */
 
-    const fnType = new Map([["click", mars3d.EventType.click]]);
+    const fnType = new Map([
+      ["click", mars3d.EventType.click],
+      ["initialTilesLoaded", mars3d.EventType.initialTilesLoaded],
+    ]);
     return new Promise((resolve, reject) => {
       let modelId,
         modelType,
@@ -123,7 +126,7 @@ class BimModel {
         if (url.indexOf("tileset.json") < 0) {
           console.error("链接不完整", modelTitle);
           resolve({
-            tite: "【模型】" + modelTitle + "数据地址有误",
+            tite: "【模型】<" + modelTitle + ">链接地址有误",
             type: "error",
             id: modelId,
             url: url,
@@ -169,6 +172,8 @@ class BimModel {
               style,
               clip,
               flat,
+              maximumScreenSpaceError: 16,
+              maximumMemoryUsage: 1024,
               cacheBytes: 1073741824 * 2, // 1024MB = 1024*1024*1024
               maximumCacheOverflowBytes: 2147483648 * 2, // 2048MB = 2048*1024*1024
               // 1.04版本
@@ -217,6 +222,10 @@ class BimModel {
                 // 加载失败
                 resolve();
               });
+            // this.tilesetLayer.on("initialTilesLoaded", () => {
+            //   console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+            // });
+
             this.tilesetLayer.on("click", (e) => {
               if (e.layer.style == null && map.bimMapEdit == "0")
                 e.layer.openHighlight(
@@ -250,7 +259,7 @@ class BimModel {
           .catch((error) => {
             console.error("数据加载失败", modelTitle);
             resolve({
-              tite: "【模型】" + modelTitle + "数据加载失败",
+              tite: "【模型】<" + modelTitle + ">无法加载",
               type: "error",
               id: modelId,
               url,
@@ -292,7 +301,6 @@ class BimModel {
     return new Promise((resolve, reject) => {
       let itemModel = window.map.getLayer(id, "modelId");
       if (itemModel) {
-        if (flyTo) itemModel.flyTo();
         /**
          * 如果模型自带颜色就不用高亮
          */
@@ -303,15 +311,23 @@ class BimModel {
             },
             true
           );
-        // 记录用户选中的模型id
-        resolve(itemModel);
+        if (flyTo) {
+          itemModel.flyTo({
+            complete: () => {
+              resolve(itemModel);
+            },
+          });
+        } else {
+          // 记录用户选中的模型id
+          resolve(itemModel);
+        }
       } else {
         /**
          *  模型因为动态释放没有加载地图上
          */
         this.add(id, fn, customAttributes).then((item) => {
           if (item) {
-            if (flyTo) item.flyTo();
+            // if (flyTo) item.flyTo();
             if (item.style == null && map.bimMapEdit == "0") {
               item.openHighlight(
                 {
@@ -320,7 +336,15 @@ class BimModel {
                 true
               );
             }
-            resolve(item);
+            if (flyTo) {
+              item.flyTo({
+                complete: () => {
+                  resolve(item);
+                },
+              });
+            } else {
+              resolve(item);
+            }
           }
         });
       }

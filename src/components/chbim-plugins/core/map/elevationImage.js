@@ -60,7 +60,7 @@ class BimElevationImage {
     } = this.exposureEnvironmentSettings();
 
     return new Promise((resolve, reject) => {
-      let imageXyzId, url, zIndex, minimumLevel, maximumLevel;
+      let imageXyzId, url, zIndex, minimumLevel, maximumLevel, chinaCRS;
       if (typeof xyzParameter != "object") {
         let xyz = this.query(xyzParameter);
         if (!xyz) reject("缺少树结构");
@@ -76,6 +76,8 @@ class BimElevationImage {
         zIndex = xyzParameter.zIndex;
         minimumLevel = xyzParameter.minimumLevel;
         maximumLevel = xyzParameter.maximumLevel;
+        // 三方影像独有
+        chinaCRS = xyzParameter.chinaCRS;
       }
       this.elevationImageLayer = new mars3d.layer.XyzLayer({
         imageXyzId,
@@ -93,6 +95,9 @@ class BimElevationImage {
         show: true,
         minimumLevel: minimumLevel || 0,
         maximumLevel: maximumLevel || 15,
+        chinaCRS,
+        // queryParameters: { token: "zhang" },
+        // headers: { Authorization: "zhang" },
       });
       this.elevationImageLayer.on(mars3d.EventType.load, (event) => {
         resolve(event);

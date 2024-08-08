@@ -275,7 +275,7 @@ class BimVector {
                 // 加载失败
                 console.error("测试shp矢量加载失败", e);
                 resolve({
-                  tite: "【矢量】" + title + "加载失败",
+                  tite: "【矢量】<" + title + ">无法加载",
                   type: "error",
                   id: id,
                   url: url,
@@ -283,7 +283,7 @@ class BimVector {
               });
           } else {
             resolve({
-              tite: "【矢量】" + title + "加载失败",
+              tite: "【矢量】<" + title + ">无法加载",
               type: "error",
               id: id,
               url: url,
@@ -293,7 +293,7 @@ class BimVector {
         .catch((error) => {
           console.error("数据有误", error);
           resolve({
-            tite: "【矢量】" + title + "数据有误",
+            tite: "【矢量】<" + title + ">链接地址有误",
             type: "error",
             id: id,
             url: url,
