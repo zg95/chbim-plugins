@@ -94,8 +94,8 @@ class BimModel {
         color = modelParameter.color;
       }
       // 裁剪对象
-      let clip = { enabled: true, precise: false };
-      let flat = { enabled: true, precise: false };
+      let clip = { enabled: true, precise: false, czm: false };
+      let flat = { enabled: true, precise: false, czm: false };
       // 自定义属性
       if (customAttributes) {
         if (customAttributes.color) color = customAttributes.color;
@@ -126,7 +126,7 @@ class BimModel {
         if (url.indexOf("tileset.json") < 0) {
           console.error("链接不完整", modelTitle);
           resolve({
-            tite: "【模型】<" + modelTitle + ">链接地址有误",
+            tite: "【模型】「" + modelTitle + "」链接地址有误",
             type: "error",
             id: modelId,
             url: url,
@@ -180,6 +180,15 @@ class BimModel {
               // customShader: new Cesium.CustomShader({
               //   lightingModel: Cesium.LightingModel.UNLIT,
               // }),
+              //         customShader: new Cesium.CustomShader({
+              //           lightingModel: Cesium.LightingModel.PBR,
+              //           fragmentShaderText: `
+              // void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material)
+              // {
+              //   material.diffuse = vec3(0.0, 0.0, 1.0);
+              //   material.diffuse.g = -fsInput.attributes.positionEC.z / 1.0e4;
+              // } `,
+              //         }),
             });
             // 铭牌 配置 有构件名称显示构件 没有显示模型名称
             this.tilesetLayer.bindPopup((event) => {
@@ -259,7 +268,7 @@ class BimModel {
           .catch((error) => {
             console.error("数据加载失败", modelTitle);
             resolve({
-              tite: "【模型】<" + modelTitle + ">无法加载",
+              tite: "【模型】「" + modelTitle + "」无法加载",
               type: "error",
               id: modelId,
               url,

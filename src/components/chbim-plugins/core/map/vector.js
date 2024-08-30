@@ -49,11 +49,10 @@ class BimVector {
    *
    */
   remove(id, customAttributes = null) {
-    if (customAttributes) {
-      if (customAttributes.isClone)
-        window.mapClone.mapEx.removeLayer(
-          window.mapClone.mapEx.getLayer(id, "vectorId")
-        );
+    if (customAttributes && customAttributes.isClone == "true") {
+      window.mapClone.mapEx.removeLayer(
+        window.mapClone.mapEx.getLayer(id, "vectorId")
+      );
     } else {
       window.map.removeLayer(window.map.getLayer(id, "vectorId"));
       if (window.dynamicMasking) window.dynamicMasking.remove(id);
@@ -174,7 +173,7 @@ class BimVector {
                 shpLayer = new mars3d.layer.GeoJsonLayer({
                   data,
                   vectorId: id,
-                  format: pointCount > 10000 ? this.simplifyFunc : null,
+                  // format: pointCount > 10000 ? this.simplifyFunc : null,
                   symbol: {
                     type: "polylineC",
                     styleOptions: {
@@ -206,7 +205,7 @@ class BimVector {
                 shpLayer = new mars3d.layer.GeoJsonLayer({
                   data,
                   vectorId: id,
-                  format: pointCount > 10000 ? this.simplifyFunc : null,
+                  // format: pointCount > 10000 ? this.simplifyFunc : null,
                   symbol: {
                     type: "polygon",
                     styleOptions: {
@@ -233,7 +232,7 @@ class BimVector {
                 shpLayer = new mars3d.layer.GeoJsonLayer({
                   data,
                   vectorId: id,
-                  format: pointCount > 10000 ? this.simplifyFunc : null,
+                  // format: pointCount > 10000 ? this.simplifyFunc : null,
                   symbol: {
                     type: "pointP",
                     styleOptions: {
@@ -257,7 +256,14 @@ class BimVector {
             }
 
             shpLayer.bindPopup((event) => {
-              console.log("event", event);
+              let popup = `<div class="bim-map-popup">`;
+              Object.keys(event.graphic.attr).forEach((item, key) => {
+                if (event.graphic.attr[item]) {
+                  popup += `<p><b>${item}</b> : ${event.graphic.attr[item]}</p>`;
+                }
+              });
+              popup += `</div>`;
+              return popup;
             });
 
             let freed = _.debounce((e) => {

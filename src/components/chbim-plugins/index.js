@@ -28,6 +28,16 @@ import BimEntity from "./core/map/entity.js";
 import PanoramicView from "./core/mapUtils/PanoramicView.ts";
 //矢量注记避让
 import DynamicMasking from "./core/mapUtils/DynamicMasking.ts";
+//场景操作
+import {
+  init,
+  initMap,
+  previousPage,
+  nextPage,
+  operateMapData,
+  getSameKeyData,
+  isValidRGBA,
+} from "./core/mapUtils/MapScheme.ts";
 
 // 签名
 // import GenerateBrowserFingerprint from "./core/mapUtils/translate.js";
@@ -80,4 +90,11 @@ export {
   BimEntity,
   PanoramicView,
   DynamicMasking,
+  init,
+  initMap,
+  previousPage,
+  nextPage,
+  operateMapData,
+  getSameKeyData,
+  isValidRGBA,
 };

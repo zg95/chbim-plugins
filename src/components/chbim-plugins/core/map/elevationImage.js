@@ -4,10 +4,15 @@
  * @param  { Array } elevationImageArr  影像数组
  */
 class BimElevationImage {
-  constructor(elevationImageArr = []) {
+  constructor(elevationImageArr = [], tkone) {
     if (mars3d) {
       this.elevationImageArr = elevationImageArr;
       this.elevationImageLayer;
+      tkone
+        ? (this.gisTkone = {
+            Authorization: `Bearer ${tkone}`,
+          })
+        : (this.gisTkone = {});
       // 默认数据
       this.form = {
         brightnessVal: 1.3, //环境亮度配置
@@ -20,6 +25,7 @@ class BimElevationImage {
         layerSaturation: 1, //瓦片饱和度
         layerGamma: 1, //瓦片伽马值
       };
+      this.tdtLayer = null;
     } else {
       console.error("未引入指定插件");
     }
@@ -36,10 +42,11 @@ class BimElevationImage {
   /**
    * 添加影像
    * @param  { Object || String } xyzParameter 影像属性 或者 影像id
+   * @param  { Object || String } isGisTkone
    * @param  { Object } fn 监听函数
    *
    */
-  add(xyzParameter, fn) {
+  add(xyzParameter, isGisTkone = true, fn) {
     // 如果重复加载 阻止
     let repeatedId;
     typeof xyzParameter != "object"
@@ -97,7 +104,7 @@ class BimElevationImage {
         maximumLevel: maximumLevel || 15,
         chinaCRS,
         // queryParameters: { token: "zhang" },
-        // headers: { Authorization: "zhang" },
+        headers: isGisTkone ? this.gisTkone : null,
       });
       this.elevationImageLayer.on(mars3d.EventType.load, (event) => {
         resolve(event);
@@ -113,6 +120,18 @@ class BimElevationImage {
       }
     });
   }
+
+  // /**
+  //  * 三方注记
+  //  * @param  { Object || String } xyzParameter 影像属性 或者 影像id
+  //  * @param  { Object || String } isGisTkone
+  //  * @param  { Object } fn 监听函数
+  //  *
+  //  */
+  // addTdt() {
+  //   if (this.tdtLayer == null) {
+  //   }
+  // }
 
   /**
    * 移除影像方法

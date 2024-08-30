@@ -125,4 +125,28 @@ const isEmptyObj = (obj) => {
   return true;
 };
 
-export { intersection, union, difference, assignDeep, compareObjects };
+/**
+ * @function 对象合并
+ * @param  { object } obj1
+ * @param  { object } obj2
+ * @description 根据key合并
+ * @returns { object }
+ * */
+const mergeObjects = (obj1, obj2) => {
+  const result = { ...obj1 }; // 先复制 obj1 到 result 中
+  for (const key in obj2) {
+    if (obj2.hasOwnProperty(key)) {
+      result[key] = obj2[key]; // 如果 obj2 有这个 key，则替换 result 中的值
+    }
+  }
+  return result;
+};
+
+export {
+  intersection,
+  union,
+  difference,
+  assignDeep,
+  compareObjects,
+  mergeObjects,
+};
