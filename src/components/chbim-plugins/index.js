@@ -38,6 +38,10 @@ import {
   getSameKeyData,
   isValidRGBA,
 } from "./core/mapUtils/MapScheme.ts";
+// 环境修改
+import BimModify from "./core/map/schemeEvnModify.js";
+// 漫游
+import Bimroaming from "./core/map/roaming.js";
 
 // 签名
 // import GenerateBrowserFingerprint from "./core/mapUtils/translate.js";
@@ -88,6 +92,8 @@ export {
   BimVector,
   ViewShed,
   BimEntity,
+  BimModify,
+  Bimroaming,
   PanoramicView,
   DynamicMasking,
   init,

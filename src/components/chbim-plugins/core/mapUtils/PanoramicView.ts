@@ -1,6 +1,5 @@
 /**
  * 360全景图方法
- * @param  { Object } itemMap  地图对象（主地图）
  */
 
 interface CameraPosition {
@@ -29,7 +28,6 @@ class PanoramicView {
 
   constructor(itemMap: any, panoramicViewClass: string) {
     if ((window as any).mars3d) {
-      this.map = itemMap;
       this.panoramicViewClass = panoramicViewClass;
       this.coordinate = [
         {
@@ -88,17 +86,17 @@ class PanoramicView {
       if (element !== null) {
         element.classList.add(this.panoramicViewClass);
       }
-      let { lat, lng, alt } = this.map.getCameraView();
+      let { lat, lng, alt } = (window as any).map.getCameraView();
       this.lat = lat;
       this.lng = lng;
       this.alt = alt;
       // 视距扩散
-      this.map.viewer.scene.camera.frustum.fov =
+      (window as any).map.viewer.scene.camera.frustum.fov =
         (window as any).Cesium.Math.PI_OVER_THREE * 1.5;
     }
     if (this.screenshotArray && this.coordinate) {
       if (this.coordinate[this.screenshotArray?.length]) {
-        this.map.setCameraView(
+        (window as any).map.setCameraView(
           {
             lat: this.lat,
             lng: this.lng,
@@ -136,15 +134,18 @@ class PanoramicView {
    * @returns { any }
    */
   async screenshot(_index: number | undefined): Promise<any> {
-    const mapImg = await this.map.expImage({ download: false });
-    const filterNode = this.map.container.getElementsByClassName(
+    const mapImg = await (window as any).map.expImage({ download: false });
+    const filterNode = (window as any).map.container.getElementsByClassName(
       "cesium-viewer-cesiumWidgetContainer"
     );
-    const divImg = await (window as any).domtoimage.toPng(this.map.container, {
-      filter: (node: any) => {
-        return node !== filterNode[0];
-      },
-    });
+    const divImg = await (window as any).domtoimage.toPng(
+      (window as any).map.container,
+      {
+        filter: (node: any) => {
+          return node !== filterNode[0];
+        },
+      }
+    );
 
     this.mergeImage(mapImg.image, divImg, mapImg.width, mapImg.height).then(
       (e: string) => {

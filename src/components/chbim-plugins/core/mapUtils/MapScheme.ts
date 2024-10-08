@@ -1,8 +1,8 @@
 /**
  * 地图步骤函数
  * */
-
 const init = () => {
+  (window as any).planClip.clearPlanClip();
   (window as any).schemeEvnModify.clearAllEvnModify();
   (window as any).bimRotatePoint.stop();
   (window as any).bimTrafficSimulation.destruction();
@@ -13,6 +13,7 @@ const init = () => {
 };
 
 const previousPage = () => {
+  (window as any).planClip.clearPlanClip();
   (window as any).bimRotatePoint.stop();
   (window as any).bimTrafficSimulation.destruction();
   if ((window as any).bimMapPTV) (window as any).bimMapPTV.destruction();
@@ -22,6 +23,7 @@ const previousPage = () => {
 };
 
 const nextPage = () => {
+  (window as any).planClip.clearPlanClip();
   (window as any).bimRotatePoint.stop();
   (window as any).bimTrafficSimulation.destruction();
   if ((window as any).bimMapPTV) (window as any).bimMapPTV.destruction();
@@ -64,16 +66,18 @@ const operateMapData = (screenplayListData) => {
       const map = new Map();
 
       mapData.forEach((item) => {
-        // 漫游数据无法被继承
+        // 复杂操作不继承
         if (
           item.type != "rotatePoint" &&
           item.type != "viewpoint" &&
           item.type != "roaming" &&
-          item.type != "splitScreen"
+          item.type != "splitScreen" &&
+          item.type != "planClip"
         ) {
           map.set(`${item["screenplayId"]}-${item["type"]}`, item);
         } else {
           // 数据需要加入previousPage
+          console.log(item);
           calculateScenedata[index].mockData.previousPage.push(item);
         }
       });
@@ -303,6 +307,7 @@ const mergeObjects = (obj1, obj2) => {
 const initOperate = (data, initType = "all") => {
   let { type, show, screenplayId, overallStaining, clip, flat } = data;
   let initData = {};
+  console.log(data, initType);
 
   if (initType == "all") {
     switch (type) {
@@ -346,7 +351,6 @@ const initOperate = (data, initType = "all") => {
           };
         }
         break;
-
       case "terrain":
         initData = {
           screenplayId,
@@ -359,6 +363,23 @@ const initOperate = (data, initType = "all") => {
           screenplayId,
           type,
           executionProperty: "false",
+        };
+        break;
+      case "underground":
+        initData = {
+          screenplayId,
+          type,
+          executionProperty: "1",
+        };
+        break;
+      case "editor":
+        initData = {
+          screenplayId,
+          type,
+          executionProperty: JSON.stringify({
+            content: "",
+            isshow: false,
+          }),
         };
         break;
     }
@@ -445,8 +466,6 @@ const initMap = (screenplayListData) => {
     }
   });
   (window as any).bimEntity.entityLayer.getGraphicsByAttr().forEach((item) => {
-    // console.log("1111111111111", item, retentionData);
-
     item.remove();
   });
   (window as any).bimMapSetUp.undergroundVal(1);
@@ -456,6 +475,7 @@ const initMap = (screenplayListData) => {
   (window as any).bimMapPTV.destruction();
   (window as any).romStop();
   (window as any).complete();
+  (window as any).planClip.clearPlanClip();
 };
 
 export {

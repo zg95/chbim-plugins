@@ -10,15 +10,13 @@
  *
  * @param  { Array } modelArray  模型数组
  * @param  { Array } showModelIdArray  需要展示到地图上的模型id数组
- * @param  { Object } map 当前地图对象
  */
 import _ from "lodash";
 class ViewShed {
-  constructor(modelArray, map, ...varparms) {
+  constructor(modelArray, ...varparms) {
     if (mars3d) {
       if (modelArray && modelArray != undefined) this.modelArray = modelArray;
       this.showModelArray = [];
-      if (map && map != undefined) this.map = map;
       this.Cesium = mars3d.Cesium;
       this.events = {};
     } else {
@@ -171,7 +169,7 @@ class ViewShed {
    * @returns { any }
    */
   resourceRelease() {
-    this.map.viewer.camera.moveEnd.addEventListener(() => {
+    window.map.viewer.camera.moveEnd.addEventListener(() => {
       this.freed();
     });
   }
@@ -183,12 +181,12 @@ class ViewShed {
    * @returns { any }
    */
   freed() {
-    let { alt } = this.map.getCameraView();
+    let { alt } = window.map.getCameraView();
     // 当视高低于20000才开始生效
     if (alt < 20000) {
       // 调用 节流 2s
       this.freed = _.throttle(() => {
-        let { lng, lat, alt, pitch } = this.map.getCameraView();
+        let { lng, lat, alt, pitch } = window.map.getCameraView();
         if (this.modelArray)
           this.modelArray.forEach((i) => {
             let releasedDistance = i.bimModel.releasedDistance
@@ -203,14 +201,14 @@ class ViewShed {
               )
             ) {
               // 视角离开 触发回调 leave
-              if (this.map.getLayer(i.id, "modelId")) {
+              if (window.map.getLayer(i.id, "modelId")) {
                 this.emit("leave", i);
               }
             } else {
               // 视角进入 触发回调 enter
               if (
                 this.showModelArray.indexOf(i.id) >= 0 &&
-                !this.map.getLayer(i.id, "modelId")
+                !window.map.getLayer(i.id, "modelId")
               ) {
                 this.emit("enter", i);
               }
@@ -228,7 +226,7 @@ class ViewShed {
    * @returns { any }
    */
   manualFreed = _.debounce(() => {
-    let { lng, lat, alt, pitch } = this.map.getCameraView(),
+    let { lng, lat, alt, pitch } = window.map.getCameraView(),
       releasedDistance;
     this.modelArray.forEach((i) => {
       releasedDistance = i.releasedDistance ? i.releasedDistance : 10000;
@@ -240,12 +238,12 @@ class ViewShed {
         )
       ) {
         // 视角离开 触发回调 leave
-        if (this.map.getLayer(i.id, "modelId")) {
+        if (window.map.getLayer(i.id, "modelId")) {
           this.emit("leave", i);
         }
       } else {
         // 视角进入 触发回调 enter
-        if (!this.map.getLayer(i.id, "modelId")) {
+        if (!window.map.getLayer(i.id, "modelId")) {
           this.emit("enter", i);
         }
       }

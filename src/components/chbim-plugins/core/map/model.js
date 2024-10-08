@@ -37,7 +37,6 @@ class BimModel {
    * @param  { Object } customAttributes 自定义属性
    */
   add(modelParameter, fn, customAttributes) {
-    console.log("customAttributes", customAttributes);
     let isClone = customAttributes?.isClone;
     /**
      * modelId 模型id
@@ -65,7 +64,14 @@ class BimModel {
         customize,
         url,
         color;
-
+      // 裁剪对象
+      let clip = {
+        enabled: true,
+        precise: false,
+        czm: false,
+        // maxCanvasSize: 7000,
+      };
+      let flat = { enabled: true, precise: false, czm: false };
       // 通过id添加
       if (typeof modelParameter != "object") {
         let model = this.query(modelParameter);
@@ -82,6 +88,7 @@ class BimModel {
         };
         url = model.url;
         color = bimModel.modelColor;
+        clip.maxCanvasSize = bimModel.gridResolution || 4080;
       } else {
         modelId = modelParameter.modelId;
         modelType = modelParameter.modelType;
@@ -92,10 +99,8 @@ class BimModel {
         customize = modelParameter.customize;
         url = modelParameter.url;
         color = modelParameter.color;
+        clip.maxCanvasSize = modelParameter.maxCanvasSize || 4080;
       }
-      // 裁剪对象
-      let clip = { enabled: true, precise: false, czm: false };
-      let flat = { enabled: true, precise: false, czm: false };
       // 自定义属性
       if (customAttributes) {
         if (customAttributes.color) color = customAttributes.color;
@@ -104,6 +109,10 @@ class BimModel {
         }
         if (customAttributes.flat) {
           flat.area = customAttributes.flat.handleDataList;
+        }
+        // 掩膜模式下最大分辨率半径
+        if (customAttributes.maxCanvasSize) {
+          clip.maxCanvasSize = customAttributes.maxCanvasSize || 4080;
         }
       }
       let itemModel = window.map.getLayer(modelParameter, "modelId");
@@ -151,6 +160,7 @@ class BimModel {
               };
             }
 
+
             // 通过对象添加
             this.tilesetLayer = new mars3d.layer.TilesetLayer({
               modelId,
@@ -173,22 +183,9 @@ class BimModel {
               clip,
               flat,
               maximumScreenSpaceError: 16,
-              maximumMemoryUsage: 1024,
-              cacheBytes: 1073741824 * 2, // 1024MB = 1024*1024*1024
-              maximumCacheOverflowBytes: 2147483648 * 2, // 2048MB = 2048*1024*1024
-              // 1.04版本
               // customShader: new Cesium.CustomShader({
               //   lightingModel: Cesium.LightingModel.UNLIT,
               // }),
-              //         customShader: new Cesium.CustomShader({
-              //           lightingModel: Cesium.LightingModel.PBR,
-              //           fragmentShaderText: `
-              // void fragmentMain(FragmentInput fsInput, inout czm_modelMaterial material)
-              // {
-              //   material.diffuse = vec3(0.0, 0.0, 1.0);
-              //   material.diffuse.g = -fsInput.attributes.positionEC.z / 1.0e4;
-              // } `,
-              //         }),
             });
             // 铭牌 配置 有构件名称显示构件 没有显示模型名称
             this.tilesetLayer.bindPopup((event) => {
@@ -218,22 +215,50 @@ class BimModel {
 
             this.tilesetLayer.readyPromise
               .then((e) => {
-                // 加载完成
-                // 处理  剪切面
+                // 创建自定义着色器材料
+
+                // var getElevation = (latitude) => {
+                //   console.log(latitude);
+                //   // 这里实现获取指定经纬度高程值的方法
+                //   return 0;
+                // };
+
+                // var customShader2 = new Cesium.CustomShader({
+                //   vertexShaderText: `
+                //             void vertexMain(VertexInput vsInput, inout czm_modelVertexOutput vsOutput) {
+                //     // 定义多边形边界
+                //     vec3 polygon[4];
+                //     polygon[0] = vec3(113.551292, 24.693151, 119.5);
+                //     polygon[1] = vec3(113.55219, 24.686011, 36.3);
+                //     polygon[2] = vec3(113.548011, 24.689711, 41.4);
+                //     polygon[3] = vec3(113.551292, 24.693151, 119.5); // 闭合多边形
+
+                //     // 将顶点坐标转换为二维平面坐标
+                //     vec3 point = vec3(vsOutput.positionMC.x, vsOutput.positionMC.y, vsOutput.positionMC.z);
+                //     float elevation = getElevation(vsOutput.positionMC);
+                //     bool inside = false;
+                //     // 如果点在多边形内，应用Z偏移
+                //     if (inside) {
+                //         vsOutput.positionMC.z -= 20.0; // 偏移量
+                //     }else {
+                //         vsOutput.positionMC.z -= 20.0;
+                //     }
+                // }
+                //         `,
+                //   getElevation: getElevation,
+                //   lightingModel: Cesium.LightingModel.UNLIT,
+                // });
+
+                // //   // 应用自定义着色器到3D Tiles数据集
+                // this.tilesetLayer.customShader = customShader2;
+
                 resolve(e);
-                let { modelId } = e.options;
-                e.clip.options.area.forEach((item) => {
-                  if (window.bimClip.activeObj[modelId][item.id].id == null)
-                    window.bimClip.activeObj[modelId][item.id].id = item.id;
-                });
               })
               .catch((e) => {
                 // 加载失败
+                console.log("加载失败", e);
                 resolve();
               });
-            // this.tilesetLayer.on("initialTilesLoaded", () => {
-            //   console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-            // });
 
             this.tilesetLayer.on("click", (e) => {
               if (e.layer.style == null && map.bimMapEdit == "0")
@@ -428,7 +453,7 @@ class BimModel {
         };
       } else {
         // 如果模型有自带颜色就染色 没有就移除
-        let oldColor = this.query(id).modelColor;
+        let oldColor = this.query(id).bimModel.modelColor;
         oldColor
           ? (itemModel.style = {
               color: { conditions: [[selectcontent, oldColor]] },

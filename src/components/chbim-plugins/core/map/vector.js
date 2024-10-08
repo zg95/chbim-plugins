@@ -8,7 +8,7 @@ import { updateStyle } from "../mapUtils/BaseGraphicStyle.js";
 import _ from "lodash";
 
 class BimVector {
-  constructor(map, vectorArr = [], isDynamicMasking = false) {
+  constructor(vectorArr = [], isDynamicMasking = false) {
     if (mars3d) {
       this.vectorArr = vectorArr;
       /**
@@ -412,7 +412,7 @@ class BimVector {
   }
 
   /**
-   * 查询矢量数据的对象wwwwwwwwww
+   * 查询矢量数据的对象
    * @param  { String } id 矢量id
    * @returns { Object || Boolean } 查询出来的树对象 或者 false
    */
@@ -467,11 +467,10 @@ class BimVector {
    *
    * @returns { any }
    */
-  nationalBoundaries() {
-    let url = "/gis/nationalBoundaries.json";
+  nationalBoundaries(url = "/gis/nationalBoundaries.json") {
     let graphicLayer = new mars3d.layer.GeoJsonLayer({
       name: "国界",
-      url: url,
+      url,
       format: (geojson) => {
         try {
           geojson = turf.simplify(geojson, {

@@ -32,7 +32,7 @@ class BimEntity {
    * @returns { any }
    */
   on(event, fn) {
-    if (event == "change" || event == "collection") {
+    if (event == "change" || event == "collection" || event == "collection") {
       this.events[event]
         ? this.events[event].push(fn)
         : (this.events[event] = [fn]);
@@ -66,6 +66,17 @@ class BimEntity {
 
   /**
    * events
+   * 事件移除所有
+   * @param  { string } event - 事件名
+   * @param  { function } callback - 回调函数
+   * @returns { any }
+   */
+  offAll() {
+    this.events = {};
+  }
+
+  /**
+   * events
    * 触发一次
    * @param  { string } event - 事件名
    * @param  { function }  fn - 回调函数
@@ -80,7 +91,7 @@ class BimEntity {
   }
 
   /**
-   * 添加标会实例
+   * 添加标绘实例
    * @param  { String } modelParameter 标绘实例id 或者 标绘参数
    *
    */
@@ -143,7 +154,7 @@ class BimEntity {
   }
 
   /**
-   * 查询矢量数据的对象
+   * 查询标绘数据的对象
    * @param  { String } id 矢量id
    * @returns { Object || Boolean } 查询出来的树对象 或者 false
    */
@@ -172,9 +183,12 @@ class BimEntity {
   selected(id, customAttributes = null) {
     let item = this.entityLayer.getGraphicByAttr(id, "entityId"),
       isClone = customAttributes?.isClone;
-    if (item._point && item._point._alt > 0) {
+    if (
+      (item.options.type == "div" || item.options.type == "point") &&
+      item._point
+    ) {
       item.flyTo({
-        radius: item._point._alt + 500,
+        radius: item._point._alt + 500 < 500 ? 5000 : item._point._alt + 500,
       });
     } else {
       item.flyTo();
@@ -219,7 +233,6 @@ class BimEntity {
    *
    */
   entityCloneLayerRemove() {
-    console.log("没用移除");
     this.entityCloneLayer.remove();
     this.entityCloneLayer = null;
   }
@@ -248,36 +261,23 @@ class BimEntity {
    *
    */
   startDrawGraphic(data) {
-    let { type, style } = data;
-    if (type == "div") {
-      if (style.html) {
-        // 收藏添加
-        this.entityLayer.startDraw(data).then((graphic) => {
-          setTimeout(() => {
-            this.entityItem = graphic;
-            this.entityLayer.startEditing(graphic);
-          }, 500);
-        });
-      } else {
-        let {
-          title,
-          divType,
-          theme_color,
-          font_color,
-          scaleByDistance,
-          scaleByDistance_far,
-          scaleByDistance_farValue,
-          scaleByDistance_near,
-          scaleByDistance_nearValue,
-          distanceDisplayCondition,
-          distanceDisplayCondition_far,
-          distanceDisplayCondition_near,
-          clampToGround,
-        } = style;
-        let newData = {
-          type: "div",
-          style: {
-            pointerEvents: true,
+    return new Promise((resolve, reject) => {
+      let { type, style } = data;
+      if (type == "div") {
+        if (style.html) {
+          // 收藏添加
+          this.entityLayer.startDraw(data).then((graphic) => {
+            setTimeout(() => {
+              this.entityItem = graphic;
+              this.entityLayer.startEditing(graphic);
+            }, 500);
+          });
+        } else {
+          let {
+            title,
+            divType,
+            theme_color,
+            font_color,
             scaleByDistance,
             scaleByDistance_far,
             scaleByDistance_farValue,
@@ -287,33 +287,50 @@ class BimEntity {
             distanceDisplayCondition_far,
             distanceDisplayCondition_near,
             clampToGround,
-            horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
-            verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
-          },
-        };
-        switch (divType) {
-          case "1":
-            newData.style.html = `<div class="entity-div-style entity-div-style1" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
+          } = style;
+          let newData = {
+            type: "div",
+            style: {
+              pointerEvents: true,
+              scaleByDistance,
+              scaleByDistance_far,
+              scaleByDistance_farValue,
+              scaleByDistance_near,
+              scaleByDistance_nearValue,
+              distanceDisplayCondition,
+              distanceDisplayCondition_far,
+              distanceDisplayCondition_near,
+              clampToGround,
+              horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
+              verticalOrigin: Cesium.VerticalOrigin.BOTTOM,
+            },
+          };
+          switch (divType) {
+            case "1":
+              newData.style.html = `<div class="entity-div-style entity-div-style1" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
             <div class="title">${title}</div>
           </div>`;
-            newData.style.horizontalOrigin = Cesium.HorizontalOrigin.CENTER;
-            break;
+              newData.style.horizontalOrigin = Cesium.HorizontalOrigin.CENTER;
+              break;
+          }
+          this.entityLayer.startDraw(newData).then((graphic) => {
+            setTimeout(() => {
+              this.entityItem = graphic;
+              this.entityLayer.startEditing(graphic);
+              resolve(graphic);
+            }, 500);
+          });
         }
-        this.entityLayer.startDraw(newData).then((graphic) => {
+      } else {
+        this.entityLayer.startDraw(data).then((graphic) => {
           setTimeout(() => {
             this.entityItem = graphic;
             this.entityLayer.startEditing(graphic);
+            resolve(graphic);
           }, 500);
         });
       }
-    } else {
-      this.entityLayer.startDraw(data).then((graphic) => {
-        setTimeout(() => {
-          this.entityItem = graphic;
-          this.entityLayer.startEditing(graphic);
-        }, 500);
-      });
-    }
+    });
   }
 
   /**
@@ -336,7 +353,11 @@ class BimEntity {
    */
   updateEntityItem(id) {
     let item = this.entityLayer.getGraphicByAttr(id, "entityId");
-    if (item) this.entityItem = item;
+    if (item) {
+      this.entityItem = item;
+    } else {
+      this.removeEntityItem();
+    }
   }
 
   /**
@@ -358,11 +379,20 @@ class BimEntity {
           horizontalOrigin: Cesium.HorizontalOrigin.LEFT,
         });
       } else {
-        // console.log("newStyle", newStyle);
-        this.entityItem.setStyle({
-          ...newStyle,
-          // horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
-        });
+        if (
+          this.entityItem.type == "circleP" &&
+          Object.keys(newStyle).length == 1 &&
+          Object.keys(newStyle)[0] == "radius" &&
+          newStyle.radius == this.entityItem.options.style.radius
+        ) {
+          return false;
+        } else {
+          // console.log("????????????????", 1);
+          this.entityItem.setStyle({
+            ...newStyle,
+            // horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+          });
+        }
       }
     }
   }
@@ -430,6 +460,7 @@ class BimEntity {
       content: "",
       divType: "",
       divStyle: {},
+      isMirror: false,
     };
     // 将HTML字符串转为DOM节点
     const divElement = document.createElement("div");
@@ -454,7 +485,9 @@ class BimEntity {
     data.divType = targetElement.classList[1]
       ? targetElement.classList[1].replace("entity-div-style", "")
       : "";
+    data.isMirror = targetElement.classList.contains("isMirror");
 
+    console.log("解耦", data);
     return data;
   }
 
@@ -490,7 +523,8 @@ class BimEntity {
       case "4":
         // 指向说明一
         html = `<div class="entity-div-style entity-div-style4" style="--theme-color1:${theme_color};--theme-font-color1:${font_color};">
-            <div class="title">${title}</div>
+            <div class="entity-title"><span class="title">${title}</span></div>
+            <div class="circular"></div>
           </div >`;
         break;
       case "5":
