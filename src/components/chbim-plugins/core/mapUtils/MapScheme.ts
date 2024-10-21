@@ -9,7 +9,13 @@ const init = () => {
   if ((window as any).bimMapPTV) (window as any).bimMapPTV.destruction();
   (window as any).romStop();
   (window as any).complete();
-  (window as any).bimMapCompare.destroyControl();
+  (window as any).bimMapCompare.hide
+    ? (window as any).bimMapCompare.hide()
+    : (window as any).bimMapCompare.destroyControl();
+  (window as any).updateEitor({
+    eitorinfo: "",
+    eitorflag: false,
+  });
 };
 
 const previousPage = () => {
@@ -19,17 +25,21 @@ const previousPage = () => {
   if ((window as any).bimMapPTV) (window as any).bimMapPTV.destruction();
   (window as any).romStop();
   (window as any).complete();
-  (window as any).bimMapCompare.destroyControl();
+  (window as any).bimMapCompare.hide
+    ? (window as any).bimMapCompare.hide()
+    : (window as any).bimMapCompare.destroyControl();
 };
 
-const nextPage = () => {
+const nextPage = (index = 1) => {
   (window as any).planClip.clearPlanClip();
   (window as any).bimRotatePoint.stop();
   (window as any).bimTrafficSimulation.destruction();
   if ((window as any).bimMapPTV) (window as any).bimMapPTV.destruction();
   (window as any).romStop();
   (window as any).complete();
-  (window as any).bimMapCompare.destroyControl();
+  (window as any).bimMapCompare.hide
+    ? (window as any).bimMapCompare.hide()
+    : (window as any).bimMapCompare.destroyControl();
 };
 
 const operateMapData = (screenplayListData) => {
@@ -77,7 +87,6 @@ const operateMapData = (screenplayListData) => {
           map.set(`${item["screenplayId"]}-${item["type"]}`, item);
         } else {
           // 数据需要加入previousPage
-          console.log(item);
           calculateScenedata[index].mockData.previousPage.push(item);
         }
       });
@@ -129,17 +138,14 @@ const operateMapData = (screenplayListData) => {
                     newMockDataItem[z] = item[z];
                   }
                 } else {
-                  // console.log("???????????????", z, map.get(key));
                   if (
                     !calculateScenedata[index].mockData.previousPage.some(
                       (x) => x.screenplayId === item.screenplayId
                     )
                   ) {
                     let newItem = initOperate(item, z);
-                    // console.log(">>>>>>>>>>>>>>>>>>>,", previousPageData);
                     previousPageData = { ...newItem, ...previousPageData };
                   }
-
                   newMockDataItem[z] = item[z];
                 }
               }
@@ -307,7 +313,6 @@ const mergeObjects = (obj1, obj2) => {
 const initOperate = (data, initType = "all") => {
   let { type, show, screenplayId, overallStaining, clip, flat } = data;
   let initData = {};
-  console.log(data, initType);
 
   if (initType == "all") {
     switch (type) {
@@ -382,6 +387,12 @@ const initOperate = (data, initType = "all") => {
           }),
         };
         break;
+      case "editor":
+        (window as any).updateEitor({
+          eitorinfo: "",
+          eitorflag: false,
+        });
+        break;
     }
   } else {
     console.log("初始化", initType);
@@ -449,8 +460,6 @@ const initMap = (screenplayListData) => {
       }
     });
   }
-
-  // console.log("retentionData", retentionData);
 
   (window as any).map.getLayers().forEach((item) => {
     if (

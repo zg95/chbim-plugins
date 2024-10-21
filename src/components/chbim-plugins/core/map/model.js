@@ -115,7 +115,14 @@ class BimModel {
           clip.maxCanvasSize = customAttributes.maxCanvasSize || 4080;
         }
       }
-      let itemModel = window.map.getLayer(modelParameter, "modelId");
+
+      let itemModel;
+      if (isClone) {
+        if (window.mapClone)
+          itemModel = window.mapClone.mapEx.getLayer(modelParameter, "modelId");
+      } else {
+        itemModel = window.map.getLayer(modelParameter, "modelId");
+      }
 
       if (itemModel) {
         resolve(itemModel);
@@ -159,7 +166,6 @@ class BimModel {
                 color: { conditions: [["true", color]] },
               };
             }
-
 
             // 通过对象添加
             this.tilesetLayer = new mars3d.layer.TilesetLayer({

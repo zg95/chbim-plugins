@@ -103,208 +103,216 @@ class BimVector {
         }
         item = modelParameter;
       }
-      let { value, url, id, title } = item;
-      const resource = new Cesium.Resource({
-        url: url,
-      });
-      resource
-        .fetchJson()
-        .then((data) => {
-          let { id, title, shpInfo } = item;
-          let { attributes, geometryType, geometryCount, pointCount } = shpInfo;
-          if (attributes) {
-            let {
-              width,
-              materialType,
-              materialOptions,
-              clampToGround,
-              distanceDisplayCondition,
-              distanceDisplayCondition_near,
-              distanceDisplayCondition_far,
-              zIndex,
-              label,
-              fill,
-              diffHeight,
-              outline,
-              outlineStyle,
-              color,
-              pixelSize,
-              outlineColor,
-              outlineWidth,
-              classificationType,
-            } = JSON.parse(attributes);
-            let shpLayer;
-            /**
-             * 为动态避让添加透明度;
-             **/
-            if (this.isDynamicMasking) {
-              label.color = Cesium.Color.fromCssColorString(
-                label.color
-              ).withAlpha(0);
+      if (item) {
+        let { value, url, id, title } = item;
+        const resource = new Cesium.Resource({
+          url: url,
+        });
+        resource
+          .fetchJson()
+          .then((data) => {
+            let { id, title, shpInfo } = item;
+            let { attributes, geometryType, geometryCount, pointCount } =
+              shpInfo;
+            if (attributes) {
+              let {
+                width,
+                materialType,
+                materialOptions,
+                clampToGround,
+                distanceDisplayCondition,
+                distanceDisplayCondition_near,
+                distanceDisplayCondition_far,
+                zIndex,
+                label,
+                fill,
+                diffHeight,
+                outline,
+                outlineStyle,
+                color,
+                pixelSize,
+                outlineColor,
+                outlineWidth,
+                classificationType,
+              } = JSON.parse(attributes);
+              let shpLayer;
+              /**
+               * 为动态避让添加透明度;
+               **/
+              if (this.isDynamicMasking) {
+                label.color = Cesium.Color.fromCssColorString(
+                  label.color
+                ).withAlpha(0);
 
-              label.outlineColor = Cesium.Color.fromCssColorString(
-                label.outlineColor
-              ).withAlpha(0.001);
+                label.outlineColor = Cesium.Color.fromCssColorString(
+                  label.outlineColor
+                ).withAlpha(0.001);
 
-              label.backgroundColor = Cesium.Color.fromCssColorString(
-                label.backgroundColor
-              ).withAlpha(0.001);
+                label.backgroundColor = Cesium.Color.fromCssColorString(
+                  label.backgroundColor
+                ).withAlpha(0.001);
 
-              label.background = false;
-              label.outline = false;
-              label.show = false;
-            } else {
-              label.color = Cesium.Color.fromCssColorString(label.color);
-              label.outlineColor = Cesium.Color.fromCssColorString(
-                label.outlineColor
-              );
-              label.backgroundColor = Cesium.Color.fromCssColorString(
-                label.backgroundColor
-              );
-            }
+                label.background = false;
+                label.outline = false;
+                label.show = false;
+              } else {
+                label.color = Cesium.Color.fromCssColorString(label.color);
+                label.outlineColor = Cesium.Color.fromCssColorString(
+                  label.outlineColor
+                );
+                label.backgroundColor = Cesium.Color.fromCssColorString(
+                  label.backgroundColor
+                );
+              }
 
-            /**
-             * 为动态避让添加透明度 end
-             **/
-            switch (geometryType) {
-              case "LineString":
-              case "MultiLineString":
-                label.backgroundPadding = 5;
-                shpLayer = new mars3d.layer.GeoJsonLayer({
-                  data,
-                  vectorId: id,
-                  // format: pointCount > 10000 ? this.simplifyFunc : null,
-                  symbol: {
-                    type: "polylineC",
-                    styleOptions: {
-                      width,
-                      clampToGround,
-                      distanceDisplayCondition,
-                      distanceDisplayCondition_far,
-                      distanceDisplayCondition_near,
-                      materialType,
-                      materialOptions,
-                      classificationType,
-                      label,
+              /**
+               * 为动态避让添加透明度 end
+               **/
+              switch (geometryType) {
+                case "LineString":
+                case "MultiLineString":
+                  label.backgroundPadding = 5;
+                  shpLayer = new mars3d.layer.GeoJsonLayer({
+                    data,
+                    vectorId: id,
+                    // format: pointCount > 10000 ? this.simplifyFunc : null,
+                    symbol: {
+                      type: "polylineC",
+                      styleOptions: {
+                        width,
+                        clampToGround,
+                        distanceDisplayCondition,
+                        distanceDisplayCondition_far,
+                        distanceDisplayCondition_near,
+                        materialType,
+                        materialOptions,
+                        classificationType,
+                        label,
+                      },
                     },
-                  },
-                  // popup: `&nbsp;&nbsp; ${title} &nbsp;&nbsp;`,
-                  hasZIndex: true,
-                  zIndex: zIndex,
-                });
-                break;
-              case "Polygon":
-              case "MultiPolygon":
-                if (materialType == "PolyGrass") {
-                  materialOptions = {
-                    evenColor: new Cesium.Color(0.25, 0.4, 0.1, 1.0),
-                    oddColor: new Cesium.Color(0.1, 0.1, 0.1, 1.0),
-                    frequency: 1.5, // 斑驳
-                  };
-                }
-                shpLayer = new mars3d.layer.GeoJsonLayer({
-                  data,
-                  vectorId: id,
-                  // format: pointCount > 10000 ? this.simplifyFunc : null,
-                  symbol: {
-                    type: "polygon",
-                    styleOptions: {
-                      fill,
-                      diffHeight,
-                      clampToGround,
-                      materialType,
-                      materialOptions,
-                      distanceDisplayCondition,
-                      distanceDisplayCondition_far,
-                      distanceDisplayCondition_near,
-                      outlineStyle,
-                      outline,
-                      classificationType,
-                      label,
+                    // popup: `&nbsp;&nbsp; ${title} &nbsp;&nbsp;`,
+                    hasZIndex: true,
+                    zIndex: zIndex,
+                  });
+                  break;
+                case "Polygon":
+                case "MultiPolygon":
+                  if (materialType == "PolyGrass") {
+                    materialOptions = {
+                      evenColor: new Cesium.Color(0.25, 0.4, 0.1, 1.0),
+                      oddColor: new Cesium.Color(0.1, 0.1, 0.1, 1.0),
+                      frequency: 1.5, // 斑驳
+                    };
+                  }
+                  shpLayer = new mars3d.layer.GeoJsonLayer({
+                    data,
+                    vectorId: id,
+                    // format: pointCount > 10000 ? this.simplifyFunc : null,
+                    symbol: {
+                      type: "polygon",
+                      styleOptions: {
+                        fill,
+                        diffHeight,
+                        clampToGround,
+                        materialType,
+                        materialOptions,
+                        distanceDisplayCondition,
+                        distanceDisplayCondition_far,
+                        distanceDisplayCondition_near,
+                        outlineStyle,
+                        outline,
+                        classificationType,
+                        label,
+                      },
                     },
-                  },
-                  // popup: `&nbsp;&nbsp; ${title} &nbsp;&nbsp;`,
-                });
-                break;
+                    // popup: `&nbsp;&nbsp; ${title} &nbsp;&nbsp;`,
+                  });
+                  break;
 
-              case "Point":
-              case "MultiPoint":
-                shpLayer = new mars3d.layer.GeoJsonLayer({
-                  data,
-                  vectorId: id,
-                  // format: pointCount > 10000 ? this.simplifyFunc : null,
-                  symbol: {
-                    type: "pointP",
-                    styleOptions: {
-                      color,
-                      pixelSize,
-                      outline,
-                      outlineColor,
-                      outlineWidth,
-                      visibleDepth: false,
-                      label,
+                case "Point":
+                case "MultiPoint":
+                  shpLayer = new mars3d.layer.GeoJsonLayer({
+                    data,
+                    vectorId: id,
+                    // format: pointCount > 10000 ? this.simplifyFunc : null,
+                    symbol: {
+                      type: "pointP",
+                      styleOptions: {
+                        color,
+                        pixelSize,
+                        outline,
+                        outlineColor,
+                        outlineWidth,
+                        visibleDepth: false,
+                        label,
+                      },
                     },
-                  },
+                  });
+                  break;
+              }
+
+              if (isClone) {
+                window.mapClone.mapEx.addLayer(shpLayer);
+              } else {
+                window.map.addLayer(shpLayer);
+              }
+
+              shpLayer.bindPopup((event) => {
+                let popup = `<div class="bim-map-popup">`;
+                Object.keys(event.graphic.attr).forEach((item, key) => {
+                  if (event.graphic.attr[item]) {
+                    popup += `<p><b>${item}</b> : ${event.graphic.attr[item]}</p>`;
+                  }
                 });
-                break;
-            }
-
-            if (isClone) {
-              window.mapClone.mapEx.addLayer(shpLayer);
-            } else {
-              window.map.addLayer(shpLayer);
-            }
-
-            shpLayer.bindPopup((event) => {
-              let popup = `<div class="bim-map-popup">`;
-              Object.keys(event.graphic.attr).forEach((item, key) => {
-                if (event.graphic.attr[item]) {
-                  popup += `<p><b>${item}</b> : ${event.graphic.attr[item]}</p>`;
-                }
+                popup += `</div>`;
+                return popup;
               });
-              popup += `</div>`;
-              return popup;
-            });
 
-            let freed = _.debounce((e) => {
-              console.log("测试shp矢量加载完成");
-              window.dynamicMasking.add(e, JSON.parse(attributes));
-            }, 500);
+              let freed = _.debounce((e) => {
+                window.dynamicMasking.add(e, JSON.parse(attributes));
+              }, 500);
 
-            shpLayer.readyPromise
-              .then((e) => {
-                // 加载完成
-                if (window.dynamicMasking) freed(e);
-                resolve(e);
-              })
-              .catch((e) => {
-                // 加载失败
-                console.error("测试shp矢量加载失败", e);
-                resolve({
-                  tite: "【矢量】<" + title + ">无法加载",
-                  type: "error",
-                  id: id,
-                  url: url,
+              shpLayer.readyPromise
+                .then((e) => {
+                  // 加载完成
+                  if (window.dynamicMasking) freed(e);
+                  resolve(e);
+                })
+                .catch((e) => {
+                  // 加载失败
+                  console.error("测试shp矢量加载失败", e);
+                  resolve({
+                    tite: "【矢量】「" + title + "」无法加载",
+                    type: "error",
+                    id: id,
+                    url: url,
+                  });
                 });
+            } else {
+              resolve({
+                tite: "【矢量】「" + title + "」无法加载",
+                type: "error",
+                id: id,
+                url: url,
               });
-          } else {
+            }
+          })
+          .catch((error) => {
+            console.error("数据有误", error);
             resolve({
-              tite: "【矢量】<" + title + ">无法加载",
+              tite: "【矢量】「" + title + "」链接地址有误",
               type: "error",
               id: id,
               url: url,
             });
-          }
-        })
-        .catch((error) => {
-          console.error("数据有误", error);
-          resolve({
-            tite: "【矢量】<" + title + ">链接地址有误",
-            type: "error",
-            id: id,
-            url: url,
           });
+      } else {
+        resolve({
+          tite: "【矢量】ID:「" + modelParameter + "」已删除",
+          type: "error",
+          id: modelParameter,
         });
+      }
     });
   }
   /**
@@ -471,6 +479,7 @@ class BimVector {
     let graphicLayer = new mars3d.layer.GeoJsonLayer({
       name: "国界",
       url,
+      vectorId: "border",
       format: (geojson) => {
         try {
           geojson = turf.simplify(geojson, {

@@ -102,13 +102,22 @@ class BimEntity {
           item,
           graphic,
           isClone = customAttributes?.isClone;
+
         if (isClone) {
           if (this.entityCloneLayer) {
             item = this.query(modelParameter);
-            graphic = JSON.parse(item.bimPlanPainting.graphic);
-            graphic.attr = graphic.attr || {};
-            graphic.attr.entityId = modelParameter;
-            this.entityCloneLayer.addGraphic(graphic);
+            if (item) {
+              graphic = JSON.parse(item.bimPlanPainting.graphic);
+              graphic.attr = graphic.attr || {};
+              graphic.attr.entityId = modelParameter;
+              this.entityCloneLayer.addGraphic(graphic);
+            } else {
+              resolve({
+                tite: "【标绘】 ID:「" + modelParameter + "」已删除",
+                type: "error",
+                id: modelParameter,
+              });
+            }
           }
         } else {
           // graphic 矢量对象数据
@@ -118,9 +127,17 @@ class BimEntity {
               "entityId"
             );
             item = this.query(modelParameter);
-            graphic = JSON.parse(item.bimPlanPainting.graphic);
-            graphic.attr = graphic.attr || {};
-            graphic.attr.entityId = modelParameter;
+            if (item) {
+              graphic = JSON.parse(item.bimPlanPainting.graphic);
+              graphic.attr = graphic.attr || {};
+              graphic.attr.entityId = modelParameter;
+            } else {
+              resolve({
+                tite: "【标绘】ID:「" + modelParameter + "」已删除",
+                type: "error",
+                id: modelParameter,
+              });
+            }
           } else {
             itemEntity = this.entityLayer.getGraphicByAttr(
               modelParameter.id,
@@ -220,7 +237,10 @@ class BimEntity {
   }
 
   entityCloneLayerInit() {
-    if (this.entityCloneLayer == null) {
+    if (
+      this.entityCloneLayer == null ||
+      this.entityCloneLayer.state == "destroy"
+    ) {
       this.entityCloneLayer = window.mapClone._mapEx.getLayer(
         "bimEntity",
         "entityId"
@@ -263,6 +283,7 @@ class BimEntity {
   startDrawGraphic(data) {
     return new Promise((resolve, reject) => {
       let { type, style } = data;
+      data.style.drawShow = true;
       if (type == "div") {
         if (style.html) {
           // 收藏添加
@@ -387,10 +408,9 @@ class BimEntity {
         ) {
           return false;
         } else {
-          // console.log("????????????????", 1);
           this.entityItem.setStyle({
             ...newStyle,
-            // horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+            horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
           });
         }
       }
